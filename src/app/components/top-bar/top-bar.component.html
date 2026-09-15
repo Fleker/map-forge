@@ -1,0 +1,280 @@
+<header class="top-bar">
+  <!-- Brand & Map Title -->
+  <div class="left-section">
+    <div class="brand">
+      <span class="brand-icon">🗺️</span>
+      <span class="brand-name">MapForge</span>
+    </div>
+
+    <div class="city-info" (click)="openMetadataEditor()" title="Click to edit city details">
+      <span class="city-name">{{ state.currentMap().name }}</span>
+      <span class="edit-hint">✏️</span>
+    </div>
+
+    <!-- Presets Dropdown -->
+    <div class="preset-picker">
+      <select (change)="onPresetChange($event)">
+        <option value="aethelburg">Aethelburg (Steampunk/River)</option>
+        <option value="oakhaven">Oakhaven (Collegiate Town)</option>
+        <option value="blank">Blank Slate</option>
+      </select>
+    </div>
+
+    <!-- Era & Font Theme Selector -->
+    <div class="era-picker" title="Change World Era & Font Style">
+      <span class="era-icon">⏳</span>
+      <select [ngModel]="state.currentMap().era" (ngModelChange)="setEra($event)">
+        <option value="medieval">Medieval / Fantasy</option>
+        <option value="victorian_steampunk">Victorian / Steampunk</option>
+        <option value="contemporary_modern">Modern / Urban</option>
+        <option value="cyberpunk_scifi">Cyberpunk / Sci-Fi</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Drawing Tools Group -->
+  <div class="tools-section">
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'select'"
+      (click)="setTool('select')"
+      title="Select & Inspect Elements (V)"
+    >
+      <span class="icon">👆</span>
+      <span class="label">Select</span>
+    </button>
+
+    <div class="separator"></div>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_road'"
+      (click)="setTool('draw_road')"
+      title="Draw Roads & Streets (R)"
+    >
+      <span class="icon">🛣️</span>
+      <span class="label">Road</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_building'"
+      (click)="setTool('draw_building')"
+      title="Place Buildings & Landmarks (B)"
+    >
+      <span class="icon">🏛️</span>
+      <span class="label">Building</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_transit_line'"
+      (click)="setTool('draw_transit_line')"
+      title="Draw Transit Lines (Metro/Tram/Bus)"
+    >
+      <span class="icon">🚊</span>
+      <span class="label">Transit</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_station'"
+      (click)="setTool('draw_station')"
+      title="Place Transit Station"
+    >
+      <span class="icon">🚉</span>
+      <span class="label">Station</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_district'"
+      (click)="setTool('draw_district')"
+      title="Draw District Boundary (D)"
+    >
+      <span class="icon">🏘️</span>
+      <span class="label">District</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_water'"
+      (click)="setTool('draw_water')"
+      title="Draw Water Feature (River, Lake)"
+    >
+      <span class="icon">🌊</span>
+      <span class="label">Water</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_park'"
+      (click)="setTool('draw_park')"
+      title="Draw Park / Green Space"
+    >
+      <span class="icon">🌳</span>
+      <span class="label">Park</span>
+    </button>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'add_poi'"
+      (click)="setTool('add_poi')"
+      title="Drop Point of Interest / Landmark Marker (P)"
+    >
+      <span class="icon">📍</span>
+      <span class="label">POI</span>
+    </button>
+
+    <div class="separator"></div>
+
+    <button
+      class="tool-btn"
+      [class.active]="state.activeTool() === 'draw_topo'"
+      (click)="setTool('draw_topo')"
+      title="Draw Topography (Cliffs, Ridges, Elevation Contours)"
+    >
+      <span class="icon">⛰️</span>
+      <span class="label">Topo</span>
+    </button>
+
+    <button
+      class="tool-btn highlight-reach"
+      [class.active]="state.activeTool() === 'isochrone'"
+      (click)="setTool('isochrone')"
+      title="Travel Time Reach Isochrone (5, 10, 15, 20-min bands)"
+    >
+      <span class="icon">⏱️</span>
+      <span class="label">Reach</span>
+    </button>
+  </div>
+
+  <!-- Actions & Modals Group -->
+  <div class="actions-section">
+    <!-- Navigation / Routing Toggle -->
+    <button
+      class="action-btn"
+      [class.active]="state.showNavigationPanel()"
+      (click)="state.showNavigationPanel.set(!state.showNavigationPanel())"
+      title="Navigation & Fictional Route Finder"
+    >
+      <span class="icon">🧭</span>
+      <span class="label">Navigate</span>
+    </button>
+
+    <!-- Population & Realism Toggle -->
+    <button
+      class="action-btn highlight-gold"
+      [class.active]="state.showPopulationModal()"
+      (click)="state.showPopulationModal.set(true)"
+      title="Population & Jobs Realism Estimator"
+    >
+      <span class="icon">👥</span>
+      <span class="label">Population</span>
+    </button>
+
+    <!-- Creative Writing Lore & Chapters -->
+    <button
+      class="action-btn"
+      [class.active]="state.showLoreDrawer()"
+      (click)="state.showLoreDrawer.set(!state.showLoreDrawer())"
+      title="Creative Writing Lore & Chapter Bookmarks"
+    >
+      <span class="icon">📖</span>
+      <span class="label">Lore</span>
+    </button>
+
+    <div class="separator"></div>
+
+    <!-- Undo / Redo -->
+    <div class="undo-redo-group">
+      <button class="icon-btn" (click)="state.undo()" title="Undo (Ctrl+Z)">↩️</button>
+      <button class="icon-btn" (click)="state.redo()" title="Redo (Ctrl+Y)">↪️</button>
+    </div>
+
+    <!-- Save / Load Files -->
+    <div class="file-group">
+      <button class="icon-btn" (click)="state.exportToJsonFile()" title="Save Map to Local JSON File">💾</button>
+      <label class="icon-btn file-upload-label" title="Load Map from Local JSON File">
+        📁
+        <input type="file" accept=".json,.mapforge.json" (change)="onFileSelected($event)" hidden />
+      </label>
+    </div>
+
+    <!-- Export Book Image -->
+    <button
+      class="export-btn"
+      (click)="state.showExportModal.set(true)"
+      title="Export High-Resolution Book-Ready Image (300 DPI, Print, SVG)"
+    >
+      <span class="icon">🖼️</span>
+      <span class="label">Export Map</span>
+    </button>
+  </div>
+</header>
+
+<!-- Metadata Modal -->
+@if (showMetadataModal) {
+  <div class="modal-backdrop" (click)="showMetadataModal = false">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Edit City & World Information</h3>
+        <button class="close-btn" (click)="showMetadataModal = false">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <label>
+          <span>City / Realm Name</span>
+          <input type="text" [(ngModel)]="metaName" placeholder="e.g. Aethelburg" />
+        </label>
+
+        <label>
+          <span>Author / Cartographer</span>
+          <input type="text" [(ngModel)]="metaAuthor" placeholder="Your Name" />
+        </label>
+
+        <label>
+          <span>Era / Setting</span>
+          <select [(ngModel)]="metaEra">
+            <option value="medieval">Medieval / High Fantasy</option>
+            <option value="victorian_steampunk">Victorian / Steampunk</option>
+            <option value="contemporary_modern">Contemporary / Modern Urban</option>
+            <option value="cyberpunk_scifi">Cyberpunk / Sci-Fi</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Description / World Lore</span>
+          <textarea [(ngModel)]="metaDescription" rows="3" placeholder="Brief lore summary for your book..."></textarea>
+        </label>
+
+        <div style="display: flex; gap: 10px;">
+          <label style="flex: 1;">
+            <span>Map Width (units)</span>
+            <input type="number" min="500" max="10000" step="100" [(ngModel)]="metaWidth" />
+          </label>
+          <label style="flex: 1;">
+            <span>Map Height (units)</span>
+            <input type="number" min="500" max="10000" step="100" [(ngModel)]="metaHeight" />
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <label style="flex: 1;">
+            <span>Grid Cell Size (units)</span>
+            <input type="number" min="50" max="1000" step="50" [(ngModel)]="metaGridStep" placeholder="200" />
+          </label>
+          <label style="flex: 1;">
+            <span>Scale (units per 1 km)</span>
+            <input type="number" min="50" max="2000" step="50" [(ngModel)]="metaUnitsPerKm" />
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="showMetadataModal = false">Cancel</button>
+        <button class="btn-primary" (click)="saveMetadata()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+}

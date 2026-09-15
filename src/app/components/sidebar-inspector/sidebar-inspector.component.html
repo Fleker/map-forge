@@ -1,0 +1,509 @@
+@if (state.selectedFeature() && state.selectedItem()) {
+  <aside class="sidebar-inspector">
+    <div class="sidebar-header">
+      <div class="type-badge">
+        <span class="type-icon">
+          @switch (state.selectedFeature()?.type) {
+            @case ('building') { 🏛️ }
+            @case ('road') { 🛣️ }
+            @case ('district') { 🏘️ }
+            @case ('transit_station') { 🚉 }
+            @case ('transit_line') { 🚊 }
+            @case ('poi') { 📍 }
+            @case ('water') { 🌊 }
+            @case ('park') { 🌳 }
+            @case ('topography') { ⛰️ }
+          }
+        </span>
+        <span class="type-name">{{ state.selectedFeature()?.type?.replace('_', ' ') | uppercase }}</span>
+      </div>
+      <button class="close-btn" (click)="close()" title="Close Inspector">✕</button>
+    </div>
+
+    <div class="sidebar-content">
+      <!-- BUILDING INSPECTION -->
+      @if (state.selectedFeature()?.type === 'building') {
+        @let bld = asBuilding(state.selectedItem());
+        <div class="form-group">
+          <label>Building / Institution Name</label>
+          <input
+            type="text"
+            [(ngModel)]="bld.name"
+            (ngModelChange)="updateBuilding(bld)"
+            placeholder="e.g. St. Jude University"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Zoning / Building Type</label>
+          <select [(ngModel)]="bld.type" (ngModelChange)="updateBuilding(bld)">
+            <option value="residential_house">Residential - Single-Family House</option>
+            <option value="residential_apartment">Residential - Apartment Complex</option>
+            <option value="residential_highrise">Residential - High-Rise Tenement</option>
+            <option value="commercial_retail">Commercial - Retail / Shops / Market</option>
+            <option value="commercial_office">Commercial - Office / Corporate</option>
+            <option value="industrial">Industrial - Factory / Warehouse / Foundry</option>
+            <option value="institutional">Institutional - University / Library / Civic</option>
+            <option value="mixed_use">Mixed Use - Ground Retail + Upper Living</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Floors / Levels</label>
+            <input
+              type="number"
+              min="1"
+              max="120"
+              [(ngModel)]="bld.floors"
+              (ngModelChange)="updateBuilding(bld)"
+            />
+          </div>
+          <div class="form-group flex-1">
+            <label>Units / Suites</label>
+            <input
+              type="number"
+              min="1"
+              max="1000"
+              [(ngModel)]="bld.unitCount"
+              (ngModelChange)="updateBuilding(bld)"
+            />
+          </div>
+        </div>
+
+        <!-- Real-Time Demographics for this Building -->
+        @let stats = demographics.estimateBuildingPopAndJobs(bld, state.currentMap().era);
+        <div class="demographic-card">
+          <div class="stat-pill">
+            <span class="label">Est. Residents:</span>
+            <span class="value">{{ stats.population.toLocaleString() }}</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Est. Jobs:</span>
+            <span class="value">{{ stats.jobs.toLocaleString() }}</span>
+          </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="bld.isLandmark"
+              (ngModelChange)="updateBuilding(bld)"
+            />
+            <span>Highlight as Key Book Landmark (prominent label on printed maps)</span>
+          </label>
+        </div>
+
+        <!-- Creative Writing Lore & Notes -->
+        <div class="form-group">
+          <label>Creative Writing Notes / Scene Details</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="bld.notes"
+            (ngModelChange)="updateBuilding(bld)"
+            placeholder="Who lives or works here? Secret passages, historical events, atmosphere..."
+          ></textarea>
+        </div>
+
+        <!-- Chapter References -->
+        <div class="form-group">
+          <label>Chapter References</label>
+          <div class="chip-list">
+            @for (ch of bld.chapterReferences; track $index) {
+              <span class="chip">
+                {{ ch }}
+                <button class="remove-chip" (click)="removeChapterRef(bld, $index)">✕</button>
+              </span>
+            }
+          </div>
+          <div class="chip-input-row">
+            <input
+              type="text"
+              [(ngModel)]="newChapterRef"
+              placeholder="e.g. Chapter 4: The Heist"
+              (keyup.enter)="addChapterRef(bld)"
+            />
+            <button class="add-chip-btn" (click)="addChapterRef(bld)">+ Add</button>
+          </div>
+        </div>
+
+        <!-- Navigation Quick Links -->
+        <div class="nav-links-section">
+          <span class="section-title">Navigation Waypoint</span>
+          <div class="btn-group">
+            <button class="btn-secondary" (click)="setAsRouteStart(bld.name, bld.center)">Set as Start</button>
+            <button class="btn-secondary" (click)="setAsRouteEnd(bld.name, bld.center)">Set as Destination</button>
+          </div>
+        </div>
+      }
+
+      <!-- ROAD INSPECTION -->
+      @if (state.selectedFeature()?.type === 'road') {
+        @let road = asRoad(state.selectedItem());
+        <div class="form-group">
+          <label>Street / Avenue Name</label>
+          <input
+            type="text"
+            [(ngModel)]="road.name"
+            (ngModelChange)="updateRoad(road)"
+            placeholder="e.g. Grand High Street"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Road Hierarchy</label>
+          <select [(ngModel)]="road.type" (ngModelChange)="updateRoad(road)">
+            <option value="highway">Major Highway / Boulevard</option>
+            <option value="avenue">Grand Avenue</option>
+            <option value="main_street">Main Street / Commercial Arterial</option>
+            <option value="local_street">Local Residential Street</option>
+            <option value="alley">Narrow Alleyway / Cobblestone</option>
+            <option value="bridge">Bridge / Overpass</option>
+            <option value="pedestrian">Pedestrian Way / Promenade</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label>Lanes</label>
+            <input
+              type="number"
+              min="1"
+              max="8"
+              [(ngModel)]="road.lanes"
+              (ngModelChange)="updateRoad(road)"
+            />
+          </div>
+          <div class="form-group flex-1">
+            <label>Speed Limit (km/h)</label>
+            <input
+              type="number"
+              min="10"
+              max="120"
+              [(ngModel)]="road.speedLimitKmH"
+              (ngModelChange)="updateRoad(road)"
+            />
+          </div>
+        </div>
+      }
+
+      <!-- DISTRICT INSPECTION -->
+      @if (state.selectedFeature()?.type === 'district') {
+        @let dist = asDistrict(state.selectedItem());
+        <div class="form-group">
+          <label>District / Quarter Name</label>
+          <input
+            type="text"
+            [(ngModel)]="dist.name"
+            (ngModelChange)="updateDistrict(dist)"
+            placeholder="e.g. University Quarter"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>District Type</label>
+          <select [(ngModel)]="dist.type" (ngModelChange)="updateDistrict(dist)">
+            <option value="academic">Academic & University</option>
+            <option value="historic">Historic / Old Town</option>
+            <option value="commercial">Commercial / Financial</option>
+            <option value="residential">Residential Neighborhood</option>
+            <option value="industrial">Industrial / Docks / Foundries</option>
+            <option value="waterfront">Waterfront & Harbor</option>
+            <option value="civic">Civic / Government</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>District Tone / Description</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="dist.description"
+            (ngModelChange)="updateDistrict(dist)"
+            placeholder="Socioeconomic vibe, safety, atmosphere..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>District Color</label>
+          <input
+            type="color"
+            [(ngModel)]="dist.color"
+            (ngModelChange)="updateDistrict(dist)"
+          />
+        </div>
+      }
+
+      <!-- TRANSIT STATION INSPECTION -->
+      @if (state.selectedFeature()?.type === 'transit_station') {
+        @let st = asStation(state.selectedItem());
+        <div class="form-group">
+          <label>Station Name</label>
+          <input
+            type="text"
+            [(ngModel)]="st.name"
+            (ngModelChange)="updateStation(st)"
+            placeholder="e.g. Central Terminal"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Transit Mode</label>
+          <select [(ngModel)]="st.type" (ngModelChange)="updateStation(st)">
+            <option value="metro">Underground / Metro</option>
+            <option value="tram">Street Tram / Cable Car</option>
+            <option value="bus">Bus Station / Stop</option>
+            <option value="ferry">Ferry Terminal</option>
+            <option value="rail">Commuter Rail</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Serviced Transit Lines ({{ st.lineIds.length || 0 }} connected)</label>
+          <div class="transit-lines-multiselect">
+            @if (state.currentMap().transitLines.length === 0) {
+              <div class="no-lines-hint">No transit lines created yet.</div>
+            } @else {
+              @for (line of state.currentMap().transitLines; track line.id) {
+                <label class="line-checkbox-item" [class.selected]="isLineSelected(st, line.id)">
+                  <input
+                    type="checkbox"
+                    [checked]="isLineSelected(st, line.id)"
+                    (change)="toggleStationLine(st, line.id, $event)"
+                  />
+                  <span class="line-badge" [style.background]="line.color"></span>
+                  <span class="line-name">{{ line.name }}</span>
+                  <span class="line-type-tag">{{ line.type | uppercase }}</span>
+                </label>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="st.isTransferHub"
+              (ngModelChange)="updateStation(st)"
+            />
+            <span>Major Multi-Line Transfer Hub</span>
+          </label>
+        </div>
+
+        <div class="nav-links-section">
+          <span class="section-title">Navigation Waypoint</span>
+          <div class="btn-group">
+            <button class="btn-secondary" (click)="setAsRouteStart(st.name, st.location)">Set as Start</button>
+            <button class="btn-secondary" (click)="setAsRouteEnd(st.name, st.location)">Set as Destination</button>
+          </div>
+        </div>
+      }
+
+      <!-- TRANSIT LINE INSPECTION -->
+      @if (state.selectedFeature()?.type === 'transit_line') {
+        @let line = asLine(state.selectedItem());
+        <div class="form-group">
+          <label>Line Name</label>
+          <input
+            type="text"
+            [(ngModel)]="line.name"
+            (ngModelChange)="updateLine(line)"
+            placeholder="e.g. Blue Line Metro"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Transit Mode</label>
+          <select [(ngModel)]="line.type" (ngModelChange)="updateLine(line)">
+            <option value="metro">Underground Metro</option>
+            <option value="tram">Street Tram / Cable Car</option>
+            <option value="rail">Commuter / Heavy Rail</option>
+            <option value="bus">Bus Rapid Transit</option>
+            <option value="ferry">Water Ferry</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Line Color</label>
+          <div class="color-picker-row">
+            <input
+              type="color"
+              [(ngModel)]="line.color"
+              (ngModelChange)="updateLine(line)"
+            />
+            <span class="color-hex">{{ line.color }}</span>
+          </div>
+
+          <div class="swatch-grid">
+            @for (swatch of transitSwatches; track swatch.color) {
+              <button
+                type="button"
+                class="color-swatch-btn"
+                [style.background]="swatch.color"
+                [class.active]="line.color.toLowerCase() === swatch.color.toLowerCase()"
+                [title]="swatch.name"
+                (click)="setLineColor(line, swatch.color)"
+              ></button>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Frequency (Mins)</label>
+          <input
+            type="number"
+            min="1"
+            max="60"
+            [(ngModel)]="line.frequencyMins"
+            (ngModelChange)="updateLine(line)"
+          />
+        </div>
+      }
+
+      <!-- POI INSPECTION -->
+      @if (state.selectedFeature()?.type === 'poi') {
+        @let poi = asPOI(state.selectedItem());
+        <div class="form-group">
+          <label>POI / Landmark Name</label>
+          <input
+            type="text"
+            [(ngModel)]="poi.name"
+            (ngModelChange)="updatePOI(poi)"
+            placeholder="e.g. The Brass Kettle Tavern"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Category</label>
+          <select [(ngModel)]="poi.category" (ngModelChange)="updatePOI(poi)">
+            <option value="landmark">Prominent Landmark</option>
+            <option value="character_home">Character Residence</option>
+            <option value="scene_location">Key Scene Location</option>
+            <option value="danger_secret">Secret / Safehouse / Den</option>
+            <option value="tavern_food">Tavern / Inn / Restaurant</option>
+            <option value="shop_market">Market / Artisan Shop</option>
+            <option value="civic">Civic Monument / Plaza</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Description & Story Context</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="poi.description"
+            (ngModelChange)="updatePOI(poi)"
+            placeholder="Atmosphere, dialogue cues, sensory details..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Chapter Reference</label>
+          <input
+            type="text"
+            [(ngModel)]="poi.chapterReference"
+            (ngModelChange)="updatePOI(poi)"
+            placeholder="e.g. Chapter 3: The Secret Meeting"
+          />
+        </div>
+
+        <div class="nav-links-section">
+          <span class="section-title">Navigation Waypoint</span>
+          <div class="btn-group">
+            <button class="btn-secondary" (click)="setAsRouteStart(poi.name, poi.location)">Set as Start</button>
+            <button class="btn-secondary" (click)="setAsRouteEnd(poi.name, poi.location)">Set as Destination</button>
+          </div>
+        </div>
+      }
+
+      <!-- NATURAL FEATURE INSPECTION -->
+      @if (state.selectedFeature()?.type === 'water' || state.selectedFeature()?.type === 'park') {
+        @let feat = asNatural(state.selectedItem());
+        <div class="form-group">
+          <label>Feature Name</label>
+          <input
+            type="text"
+            [(ngModel)]="feat.name"
+            (ngModelChange)="updateNatural(feat)"
+            placeholder="e.g. River Aethel"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Type</label>
+          <select [(ngModel)]="feat.type" (ngModelChange)="updateNatural(feat)">
+            <option value="river">River</option>
+            <option value="lake">Lake / Reservoir</option>
+            <option value="ocean">Ocean / Bay</option>
+            <option value="canal">Canal</option>
+            <option value="park">Public Park / Common</option>
+            <option value="forest">Woodland / Forest</option>
+          </select>
+        </div>
+      }
+
+      <!-- TOPOGRAPHY INSPECTION -->
+      @if (state.selectedFeature()?.type === 'topography') {
+        @let topo = asTopo(state.selectedItem());
+        <div class="form-group">
+          <label>Feature Name</label>
+          <input
+            type="text"
+            [(ngModel)]="topo.name"
+            (ngModelChange)="updateTopo(topo)"
+            placeholder="e.g. North Bluffs, High Ridge"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Topography Type</label>
+          <select [(ngModel)]="topo.type" (ngModelChange)="updateTopo(topo)">
+            <option value="cliff">Cliff / Escarpment (Directional Hachures)</option>
+            <option value="ridge">Mountain / Hill Ridge</option>
+            <option value="contour">Elevation Contour Isoline</option>
+          </select>
+        </div>
+
+        @if (topo.type === 'cliff') {
+          <div class="form-group">
+            <label>Cliff Face Direction (Hachures Side)</label>
+            <select [(ngModel)]="topo.cliffSide" (ngModelChange)="updateTopo(topo)">
+              <option value="right">Right Side</option>
+              <option value="left">Left Side</option>
+            </select>
+          </div>
+        }
+
+        @if (topo.type === 'contour') {
+          <div class="form-group">
+            <label>Elevation (meters)</label>
+            <input
+              type="number"
+              step="10"
+              [(ngModel)]="topo.elevation"
+              (ngModelChange)="updateTopo(topo)"
+              placeholder="e.g. 50, 100, 150"
+            />
+          </div>
+        }
+
+        <div class="demographic-card">
+          <div class="stat-pill">
+            <span class="label">Vertices:</span>
+            <span class="value">{{ topo.path.length }} pts</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">Render Style:</span>
+            <span class="value">{{ topo.type | uppercase }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="delete-btn" (click)="deleteCurrent()">
+        🗑️ Delete {{ state.selectedFeature()?.type?.replace('_', ' ') }}
+      </button>
+    </div>
+  </aside>
+}

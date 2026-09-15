@@ -1,0 +1,86 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            map-forge/package-lock.json
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Install dependencies
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+          elif [ -f map-forge/package.json ]; then
+            cd map-forge && npm ci
+          fi
+
+      - name: Build Angular application
+        run: |
+          if [[ "${{ github.repository }}" == *.github.io ]]; then
+            BASE_HREF="/"
+          else
+            BASE_HREF="/${{ github.event.repository.name }}/"
+          fi
+          echo "Using base-href: $BASE_HREF"
+
+          if [ -f package.json ]; then
+            npx ng build --configuration production --base-href "$BASE_HREF"
+            cp dist/map-forge/browser/index.html dist/map-forge/browser/404.html
+          elif [ -f map-forge/package.json ]; then
+            cd map-forge
+            npx ng build --configuration production --base-href "$BASE_HREF"
+            cp dist/map-forge/browser/index.html dist/map-forge/browser/404.html
+          fi
+
+      - name: Determine artifact path
+        id: set-path
+        run: |
+          if [ -d dist/map-forge/browser ]; then
+            echo "artifact_path=dist/map-forge/browser" >> "$GITHUB_OUTPUT"
+          elif [ -d map-forge/dist/map-forge/browser ]; then
+            echo "artifact_path=map-forge/dist/map-forge/browser" >> "$GITHUB_OUTPUT"
+          else
+            echo "Could not find build output directory" >&2
+            exit 1
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.set-path.outputs.artifact_path }}
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

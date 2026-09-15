@@ -1,0 +1,132 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-title">
+        <span class="header-icon">👥</span>
+        <div>
+          <h2>Urban Demographics & Realism Verification</h2>
+          <p class="subtitle">Calculated based on building footprints, zoning types, floors, and era density multipliers.</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="close()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- High Level Metrics Overview -->
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <span class="metric-label">Estimated Population</span>
+          <span class="metric-value text-blue">{{ stats().totalPopulation.toLocaleString() }}</span>
+          <span class="metric-sub">Residents across {{ stats().residentialBuildingsCount }} residential blocks</span>
+        </div>
+
+        <div class="metric-box">
+          <span class="metric-label">Estimated Total Jobs</span>
+          <span class="metric-value text-emerald">{{ stats().totalJobs.toLocaleString() }}</span>
+          <span class="metric-sub">Commercial, industrial, & civic employment</span>
+        </div>
+
+        <div class="metric-box">
+          <span class="metric-label">Jobs-to-Workforce Ratio</span>
+          <span class="metric-value text-gold">{{ stats().jobsToHousingRatio }}</span>
+          <span class="metric-sub">
+            @if (stats().jobsToHousingRatio >= 0.8 && stats().jobsToHousingRatio <= 1.4) {
+              Balanced Economic Core
+            } @else if (stats().jobsToHousingRatio > 1.4) {
+              Commuter Influx (Job Rich)
+            } @else {
+              Bedroom Community
+            }
+          </span>
+        </div>
+
+        <div class="metric-box">
+          <span class="metric-label">Average Urban Density</span>
+          <span class="metric-value text-purple">{{ stats().averageDensityPerKm2.toLocaleString() }}</span>
+          <span class="metric-sub">people / km² (Map area: {{ stats().totalAreaKm2 }} km²)</span>
+        </div>
+      </div>
+
+      <!-- Realism Feedback / World-Building Advisor -->
+      <div class="section-container">
+        <h3>World-Building Realism Feedback</h3>
+        <div class="feedback-list">
+          @for (tip of stats().realismAnalysis; track tip.title) {
+            <div class="feedback-item" [class]="tip.score">
+              <span class="feedback-icon">
+                @if (tip.score === 'good') { ✅ }
+                @else if (tip.score === 'warning') { ⚠️ }
+                @else { ℹ️ }
+              </span>
+              <div class="feedback-content">
+                <strong>{{ tip.title }}</strong>
+                <p>{{ tip.message }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- District Breakdown Table -->
+      <div class="section-container">
+        <h3>District Breakdown</h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>District</th>
+                <th>Population</th>
+                <th>Jobs</th>
+                <th>Density (people/km²)</th>
+                <th>Buildings</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of stats().districtStats; track d.districtId) {
+                <tr>
+                  <td class="font-medium">{{ d.districtName }}</td>
+                  <td class="font-mono text-blue">{{ d.population.toLocaleString() }}</td>
+                  <td class="font-mono text-emerald">{{ d.jobs.toLocaleString() }}</td>
+                  <td class="font-mono">{{ d.densityPerKm2.toLocaleString() }}</td>
+                  <td class="font-mono">{{ d.buildingCount }}</td>
+                </tr>
+              }
+              @if (stats().districtStats.length === 0) {
+                <tr>
+                  <td colspan="5" class="empty-cell">No districts drawn yet. Use the District tool to outline neighborhoods.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Building Inventory -->
+      <div class="section-container">
+        <h3>Building & Zoning Inventory</h3>
+        <div class="inventory-grid">
+          <div class="inv-item">
+            <span class="inv-name">Residential Buildings</span>
+            <span class="inv-count">{{ stats().residentialBuildingsCount }}</span>
+          </div>
+          <div class="inv-item">
+            <span class="inv-name">Commercial / Retail / Office</span>
+            <span class="inv-count">{{ stats().commercialBuildingsCount }}</span>
+          </div>
+          <div class="inv-item">
+            <span class="inv-name">Industrial / Warehouses</span>
+            <span class="inv-count">{{ stats().industrialBuildingsCount }}</span>
+          </div>
+          <div class="inv-item">
+            <span class="inv-name">Civic & Institutional</span>
+            <span class="inv-count">{{ stats().institutionalBuildingsCount }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-primary" (click)="close()">Done</button>
+    </div>
+  </div>
+</div>

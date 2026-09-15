@@ -1,0 +1,66 @@
+<aside class="lore-drawer">
+  <div class="drawer-header">
+    <div class="header-title">
+      <span class="header-icon">📖</span>
+      <div>
+        <h3>Creative Writing Reference</h3>
+        <span class="subtext">Chapter scenes, characters &amp; lore</span>
+      </div>
+    </div>
+    <button class="close-btn" (click)="close()">✕</button>
+  </div>
+
+  <div class="drawer-body">
+    <!-- Key Book Landmarks Section -->
+    <div class="lore-section">
+      <span class="section-heading">Key Book Landmarks</span>
+      <div class="landmark-list">
+        @for (b of keyLandmarks(); track b.id) {
+          <div class="landmark-item" (click)="selectLocation('building', b.id)">
+            <span class="item-icon">🏛️</span>
+            <div class="item-info">
+              <strong class="item-name">{{ b.name }}</strong>
+              <span class="item-type">{{ b.type.replace('_', ' ') | uppercase }} &bull; {{ b.floors }} Floors</span>
+              @if (b.notes) {
+                <p class="item-note">{{ b.notes }}</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Chapter Scenes & Bookmarks Section -->
+    <div class="lore-section">
+      <span class="section-heading">Scenes by Chapter</span>
+      @for (chap of chapters(); track chap.chapterName) {
+        <div class="chapter-card">
+          <div class="chapter-title">
+            <span>🔖</span>
+            <strong>{{ chap.chapterName }}</strong>
+          </div>
+          <div class="chapter-items">
+            @for (item of chap.items; track item.id) {
+              <div class="scene-item" (click)="selectLocation(item.type, item.id)">
+                <span class="scene-icon">
+                  @if (item.type === 'building') { 🏛️ } @else { 📍 }
+                </span>
+                <div class="scene-details">
+                  <span class="scene-name">{{ item.name }}</span>
+                  @if (item.notes) {
+                    <p class="scene-note">{{ item.notes }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @if (chapters().length === 0) {
+        <div class="empty-state">
+          <p>No chapter references tagged yet. Select any building or POI and add chapter references (e.g. "Chapter 1", "Prologue") to track your story scenes here!</p>
+        </div>
+      }
+    </div>
+  </div>
+</aside>

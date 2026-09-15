@@ -1,0 +1,19 @@
+<div class="app-layout" [attr.data-era]="state.currentMap().era">
+  <app-top-bar></app-top-bar>
+  <main class="main-content">
+    <app-map-view></app-map-view>
+    <app-sidebar-inspector></app-sidebar-inspector>
+    @if (state.showNavigationPanel()) {
+      <app-navigation-panel></app-navigation-panel>
+    }
+    @if (state.showLoreDrawer()) {
+      <app-lore-drawer></app-lore-drawer>
+    }
+    @if (state.showPopulationModal()) {
+      <app-population-modal></app-population-modal>
+    }
+    @if (state.showExportModal()) {
+      <app-export-modal></app-export-modal>
+    }
+  </main>
+</div>

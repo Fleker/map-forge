@@ -1,0 +1,371 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-title">
+        <span class="header-icon">🖼️</span>
+        <div>
+          <h2>Export Book-Ready Map Image</h2>
+          <p class="subtitle">Generate high-DPI raster or vector illustrations formatted for book publication.</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="close()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Left: Settings & Visibility Controls -->
+      <div class="settings-sidebar">
+        <!-- Book Style Theme -->
+        <div class="setting-group">
+          <label class="group-label">Book Theme / Style</label>
+          <div class="theme-picker">
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'grimoire'"
+              (click)="onThemeChange('grimoire')"
+            >
+              📜 Dark Grimoire (Vellum)
+            </button>
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'parchment'"
+              (click)="onThemeChange('parchment')"
+            >
+              📜 Fantasy Parchment (Light)
+            </button>
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'modern_atlas'"
+              (click)="onThemeChange('modern_atlas')"
+            >
+              🗺️ Modern Atlas
+            </button>
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'print_bw'"
+              (click)="onThemeChange('print_bw')"
+            >
+              📖 Print B&amp;W (Paperback)
+            </button>
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'print_color'"
+              (click)="onThemeChange('print_color')"
+            >
+              🎨 Print Color (Hardcover)
+            </button>
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'blueprint'"
+              (click)="onThemeChange('blueprint')"
+            >
+              📐 Architectural Blueprint
+            </button>
+            <button
+              class="theme-chip"
+              [class.active]="settings.theme === 'cyberpunk'"
+              (click)="onThemeChange('cyberpunk')"
+            >
+              ⚡ Cyberpunk / Sci-Fi
+            </button>
+          </div>
+        </div>
+
+        <!-- Book Trim Size Presets -->
+        <div class="setting-group">
+          <label class="group-label">Book Trim Size Preset</label>
+          <div class="trim-picker">
+            <button
+              class="trim-chip"
+              [class.active]="settings.trimSize === 'custom'"
+              (click)="onTrimSizeChange('custom')"
+            >
+              <strong>Map Bounds</strong>
+              <span>Custom Aspect</span>
+            </button>
+            <button
+              class="trim-chip"
+              [class.active]="settings.trimSize === '6x9'"
+              (click)="onTrimSizeChange('6x9')"
+            >
+              <strong>6" × 9"</strong>
+              <span>US Trade (Novel)</span>
+            </button>
+            <button
+              class="trim-chip"
+              [class.active]="settings.trimSize === '5.5x8.5'"
+              (click)="onTrimSizeChange('5.5x8.5')"
+            >
+              <strong>5.5" × 8.5"</strong>
+              <span>Digest / Fiction</span>
+            </button>
+            <button
+              class="trim-chip"
+              [class.active]="settings.trimSize === '5x8'"
+              (click)="onTrimSizeChange('5x8')"
+            >
+              <strong>5" × 8"</strong>
+              <span>Mass Market Pocket</span>
+            </button>
+            <button
+              class="trim-chip"
+              [class.active]="settings.trimSize === '7x10'"
+              (click)="onTrimSizeChange('7x10')"
+            >
+              <strong>7" × 10"</strong>
+              <span>Executive Atlas</span>
+            </button>
+            <button
+              class="trim-chip"
+              [class.active]="settings.trimSize === '8.5x11'"
+              (click)="onTrimSizeChange('8.5x11')"
+            >
+              <strong>8.5" × 11"</strong>
+              <span>Sourcebook / Letter</span>
+            </button>
+            <button
+              class="trim-chip highlight-spread"
+              [class.active]="settings.trimSize === '12x9_spread'"
+              (click)="onTrimSizeChange('12x9_spread')"
+            >
+              <strong>12" × 9"</strong>
+              <span>2-Page Spread Endpaper</span>
+            </button>
+          </div>
+          @if (settings.trimSize !== 'custom' && !isCurrentTrimSpread()) {
+            <div class="spine-side-picker">
+              <span class="sub-label">Book Page Binding Edge:</span>
+              <div class="side-chip-group">
+                <button
+                  type="button"
+                  class="side-chip"
+                  [class.active]="settings.spineSide === 'left'"
+                  (click)="setSpineSide('left')"
+                  title="Map on right-hand page (Recto) — spine binding is on the left"
+                >
+                  <span>📖 Right Page (Spine on Left)</span>
+                </button>
+                <button
+                  type="button"
+                  class="side-chip"
+                  [class.active]="settings.spineSide === 'right'"
+                  (click)="setSpineSide('right')"
+                  title="Map on left-hand page (Verso) — spine binding is on the right"
+                >
+                  <span>📖 Left Page (Spine on Right)</span>
+                </button>
+              </div>
+            </div>
+          }
+          @if (settings.trimSize !== 'custom') {
+            <label class="toggle-item gutter-toggle">
+              <input type="checkbox" [(ngModel)]="settings.showGutterGuide" (ngModelChange)="refreshPreview()" />
+              <span>📐 Show Spine Gutter Safety Margin Guide</span>
+            </label>
+          }
+        </div>
+
+        <!-- Resolution & DPI -->
+        <div class="setting-group">
+          <label class="group-label">Resolution &amp; Target DPI</label>
+          <div class="res-picker">
+            <button
+              class="res-chip"
+              [class.active]="settings.resolutionScale === 1"
+              (click)="onResolutionScaleChange(1)"
+            >
+              <strong>1x</strong>
+              <span>72 DPI (Web)</span>
+            </button>
+            <button
+              class="res-chip"
+              [class.active]="settings.resolutionScale === 2"
+              (click)="onResolutionScaleChange(2)"
+            >
+              <strong>2x</strong>
+              <span>150 DPI (eBook)</span>
+            </button>
+            <button
+              class="res-chip highlight"
+              [class.active]="settings.resolutionScale === 4"
+              (click)="onResolutionScaleChange(4)"
+            >
+              <strong>4x</strong>
+              <span>300 DPI (Print Ready)</span>
+            </button>
+            <button
+              class="res-chip"
+              [class.active]="settings.resolutionScale === 6"
+              (click)="onResolutionScaleChange(6)"
+            >
+              <strong>6x</strong>
+              <span>450 DPI (Poster)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Book Titles -->
+        <div class="setting-group">
+          <label class="group-label">Book Map Title &amp; Subtitle</label>
+          <input
+            type="text"
+            [(ngModel)]="settings.title"
+            (ngModelChange)="refreshPreview()"
+            placeholder="Map Title (e.g. City of Aethelburg)"
+          />
+          <input
+            type="text"
+            [(ngModel)]="settings.subtitle"
+            (ngModelChange)="refreshPreview()"
+            placeholder="Subtitle or Book Lore"
+          />
+        </div>
+
+        <!-- Feature Visibility Controls -->
+        <div class="setting-group">
+          <label class="group-label">Feature Visibility for this Resolution</label>
+          <div class="toggle-list">
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showDistricts" (ngModelChange)="refreshPreview()" />
+              <span>Districts &amp; Neighborhood Boundaries</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showDistrictLabels" (ngModelChange)="refreshPreview()" />
+              <span>District Names / Labels</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showWater" (ngModelChange)="refreshPreview()" />
+              <span>Rivers, Lakes &amp; Canals</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showParks" (ngModelChange)="refreshPreview()" />
+              <span>Parks &amp; Woodlands</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showNaturalFeatureLabels" (ngModelChange)="refreshPreview()" />
+              <span>Park &amp; River Names / Labels</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showTopography" (ngModelChange)="refreshPreview()" />
+              <span>⛰️ Topography (Cliffs, Ridges, Contours)</span>
+            </label>
+            @if (state.currentIsochrone()) {
+              <label class="toggle-item highlight-isochrone">
+                <input type="checkbox" [(ngModel)]="settings.showIsochrone" (ngModelChange)="refreshPreview()" />
+                <span>⏱️ Travel Time Reach Rings ({{ state.currentIsochrone()?.mode }})</span>
+              </label>
+            }
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showRoads" (ngModelChange)="refreshPreview()" />
+              <span>Roads &amp; Streets</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showMinorRoads" (ngModelChange)="refreshPreview()" />
+              <span>Include Minor Streets &amp; Alleys</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showRoadLabels" (ngModelChange)="refreshPreview()" />
+              <span>Street Name Labels</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showBuildings" (ngModelChange)="refreshPreview()" />
+              <span>Building Footprints &amp; 3D Shadows</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showBuildingLabels" (ngModelChange)="refreshPreview()" />
+              <span>Building Names</span>
+            </label>
+            <label class="toggle-item indent">
+              <input type="checkbox" [(ngModel)]="settings.onlyLandmarkBuildingLabels" (ngModelChange)="refreshPreview()" />
+              <span>Only Named Landmarks (University, Library, etc.)</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showTransitLines" (ngModelChange)="refreshPreview()" />
+              <span>Public Transit Lines (Metro/Tram/Rail)</span>
+            </label>
+            <label class="toggle-item indent">
+              <input type="checkbox" [(ngModel)]="settings.showTransitStations" (ngModelChange)="refreshPreview()" />
+              <span>Transit Stations &amp; Stops (Circles)</span>
+            </label>
+            <label class="toggle-item indent">
+              <input type="checkbox" [(ngModel)]="settings.showStationLabels" (ngModelChange)="refreshPreview()" />
+              <span>Station Names / Labels</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showPois" (ngModelChange)="refreshPreview()" />
+              <span>Points of Interest &amp; Story Locations</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showPoiLabels" (ngModelChange)="refreshPreview()" />
+              <span>POI Labels</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Book Ornaments -->
+        <div class="setting-group">
+          <label class="group-label">Cartographic Ornaments</label>
+          <div class="toggle-list">
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showBorder" (ngModelChange)="refreshPreview()" />
+              <span>Decorative Outer Border</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showTitleBox" (ngModelChange)="refreshPreview()" />
+              <span>Ornate Title Block &amp; Scale Note</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showCompassRose" (ngModelChange)="refreshPreview()" />
+              <span>Cardinal Compass Rose (North Arrow)</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showScaleBar" (ngModelChange)="refreshPreview()" />
+              <span>Metric Scale Bar (0 - 1 km)</span>
+            </label>
+            <label class="toggle-item">
+              <input type="checkbox" [(ngModel)]="settings.showGrid" (ngModelChange)="refreshPreview()" />
+              <span>Alphanumeric Atlas Grid (A1, B2)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Live Canvas Preview -->
+      <div class="preview-area">
+        <div class="preview-toolbar">
+          <div class="preview-left">
+            <span class="preview-label">Live Book Illustration Preview</span>
+            <span class="preview-dims">Target: {{ getTargetDimensions().width }} × {{ getTargetDimensions().height }} px</span>
+          </div>
+          @if (isRendering) {
+            <span class="rendering-badge">Rendering...</span>
+          }
+        </div>
+
+        @if (getTargetDimensions().clamped) {
+          <div class="clamped-banner">
+            ⚠️ Raster export resolution clamped to safe browser limit ({{ getTargetDimensions().width }}×{{ getTargetDimensions().height }}px). For full lossless resolution of huge maps, use <strong>SVG (Vector)</strong>.
+          </div>
+        }
+
+        <div class="canvas-viewport">
+          <canvas #previewCanvas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="download-group">
+        <button class="btn-download primary" (click)="downloadRaster('png')">
+          📥 Download PNG ({{ getTargetDimensions().width }}×{{ getTargetDimensions().height }}px)
+        </button>
+        <button class="btn-download" (click)="downloadRaster('jpeg')">
+          Download JPEG
+        </button>
+        <button class="btn-download" (click)="downloadSVG()">
+          Download SVG (Vector)
+        </button>
+      </div>
+      <button class="btn-close" (click)="close()">Close</button>
+    </div>
+  </div>
+</div>

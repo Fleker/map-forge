@@ -1,0 +1,621 @@
+/* Leaflet Styles */
+@import 'leaflet/dist/leaflet.css';
+
+:root {
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Cinzel', 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Era-Based Typography & Theming Tokens */
+  --font-era-title: 'Cinzel Decorative', 'Cinzel', 'MedievalSharp', Georgia, serif;
+  --font-era-serif: 'Cinzel', 'MedievalSharp', Georgia, serif;
+  --font-era-body: 'Inter', -apple-system, sans-serif;
+  --font-era-map-district: 'Cinzel Decorative', 'Cinzel', 'MedievalSharp', serif;
+  --font-era-map-road: 'Cinzel', 'Georgia', serif;
+  --font-era-map-building: 'Cinzel', 'Georgia', serif;
+  --font-era-hud: 'Cinzel', 'Georgia', serif;
+  --era-accent: #f59e0b;
+  --era-badge-bg: rgba(245, 158, 11, 0.15);
+  --era-badge-color: #fbbf24;
+  --district-text-color: #3e2723;
+  --district-text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 0 10px rgba(255, 255, 255, 0.9);
+  --road-label-bg: rgba(253, 250, 243, 0.94);
+  --road-label-border: #b8a896;
+  --road-label-color: #3e2723;
+  --building-label-bg: rgba(255, 253, 247, 0.94);
+  --building-label-border: #c4b5a3;
+  --building-label-color: #2c1810;
+  --grid-label-bg: rgba(244, 235, 217, 0.88);
+  --grid-label-color: #4a3525;
+  --grid-label-border: rgba(74, 53, 37, 0.25);
+
+  /* Color Palette - Elegant Dark Theme for UI */
+  --bg-dark: #12151c;
+  --bg-surface: #1a1e28;
+  --bg-surface-elevated: #222836;
+  --bg-surface-hover: #2d3547;
+  --border-color: #2e384d;
+  --border-subtle: #242c3d;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --accent-primary: #3b82f6;
+  --accent-primary-hover: #2563eb;
+  --accent-gold: #f59e0b;
+  --accent-emerald: #10b981;
+  --accent-rose: #f43f5e;
+  --accent-purple: #8b5cf6;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+}
+
+[data-era="medieval"] {
+  --font-era-title: 'Cinzel Decorative', 'Cinzel', 'MedievalSharp', Georgia, serif;
+  --font-era-serif: 'Cinzel', 'MedievalSharp', Georgia, serif;
+  --font-era-body: 'Inter', -apple-system, sans-serif;
+  --font-era-map-district: 'Cinzel Decorative', 'Cinzel', 'MedievalSharp', serif;
+  --font-era-map-road: 'Cinzel', 'Georgia', serif;
+  --font-era-map-building: 'Cinzel', 'Georgia', serif;
+  --font-era-hud: 'Cinzel', 'Georgia', serif;
+  --era-accent: #f59e0b;
+  --era-badge-bg: rgba(245, 158, 11, 0.15);
+  --era-badge-color: #fbbf24;
+  --district-text-color: #f3e8d2;
+  --district-text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(26, 20, 15, 0.9);
+  --road-label-bg: rgba(34, 28, 22, 0.94);
+  --road-label-border: #6b543f;
+  --road-label-color: #f3e8d2;
+  --building-label-bg: rgba(34, 28, 22, 0.94);
+  --building-label-border: #66513d;
+  --building-label-color: #f3e8d2;
+  --station-label-bg: rgba(34, 28, 22, 0.94);
+  --station-label-border: #6b543f;
+  --station-label-color: #f3e8d2;
+  --grid-label-bg: rgba(34, 28, 22, 0.88);
+  --grid-label-color: #d8c4aa;
+  --grid-label-border: rgba(180, 140, 95, 0.25);
+}
+
+[data-era="victorian_steampunk"] {
+  --font-era-title: 'Playfair Display', 'Book Antiqua', 'Baskerville', serif;
+  --font-era-serif: 'Playfair Display', 'Book Antiqua', 'Baskerville', serif;
+  --font-era-body: 'Inter', -apple-system, sans-serif;
+  --font-era-map-district: 'Playfair Display', 'Book Antiqua', serif;
+  --font-era-map-road: 'Playfair Display', 'Georgia', serif;
+  --font-era-map-building: 'Playfair Display', 'Georgia', serif;
+  --font-era-hud: 'JetBrains Mono', monospace;
+  --era-accent: #d97706;
+  --era-badge-bg: rgba(217, 119, 6, 0.18);
+  --era-badge-color: #f59e0b;
+  --district-text-color: #f5ecd8;
+  --district-text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 10px rgba(35, 25, 18, 0.85);
+  --road-label-bg: rgba(30, 26, 22, 0.94);
+  --road-label-border: #735d48;
+  --road-label-color: #f5ecd8;
+  --building-label-bg: rgba(30, 26, 22, 0.95);
+  --building-label-border: #6e5844;
+  --building-label-color: #f5ecd8;
+  --station-label-bg: rgba(30, 26, 22, 0.94);
+  --station-label-border: #6e5844;
+  --station-label-color: #f5ecd8;
+  --grid-label-bg: rgba(30, 26, 22, 0.88);
+  --grid-label-color: #d8c7b0;
+  --grid-label-border: rgba(160, 125, 90, 0.25);
+}
+
+[data-era="contemporary_modern"] {
+  --font-era-title: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-era-serif: 'Inter', -apple-system, sans-serif;
+  --font-era-body: 'Inter', -apple-system, sans-serif;
+  --font-era-map-district: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-era-map-road: 'Inter', -apple-system, sans-serif;
+  --font-era-map-building: 'Inter', -apple-system, sans-serif;
+  --font-era-hud: 'JetBrains Mono', monospace;
+  --era-accent: #3b82f6;
+  --era-badge-bg: rgba(59, 130, 246, 0.15);
+  --era-badge-color: #60a5fa;
+  --district-text-color: #f8fafc;
+  --district-text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(15, 23, 42, 0.9);
+  --road-label-bg: rgba(18, 22, 30, 0.92);
+  --road-label-border: #334155;
+  --road-label-color: #f1f5f9;
+  --building-label-bg: rgba(22, 27, 36, 0.92);
+  --building-label-border: #3b4559;
+  --building-label-color: #e2e8f0;
+  --station-label-bg: rgba(18, 24, 38, 0.94);
+  --station-label-border: #334155;
+  --station-label-color: #f1f5f9;
+  --grid-label-bg: rgba(18, 21, 28, 0.85);
+  --grid-label-color: #94a3b8;
+  --grid-label-border: rgba(255, 255, 255, 0.12);
+}
+
+[data-era="cyberpunk_scifi"] {
+  --font-era-title: 'Orbitron', 'Share Tech Mono', monospace;
+  --font-era-serif: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  --font-era-body: 'Inter', -apple-system, sans-serif;
+  --font-era-map-district: 'Orbitron', 'Share Tech Mono', monospace;
+  --font-era-map-road: 'Share Tech Mono', monospace;
+  --font-era-map-building: 'Share Tech Mono', monospace;
+  --font-era-hud: 'Share Tech Mono', monospace;
+  --era-accent: #00f0ff;
+  --era-badge-bg: rgba(0, 240, 255, 0.15);
+  --era-badge-color: #00f0ff;
+  --district-text-color: #00f0ff;
+  --district-text-shadow: 0 0 10px rgba(0, 240, 255, 0.85), 0 0 20px rgba(0, 240, 255, 0.4), 0 2px 4px rgba(0, 0, 0, 0.9);
+  --road-label-bg: rgba(10, 13, 22, 0.94);
+  --road-label-border: #00f0ff;
+  --road-label-color: #38bdf8;
+  --building-label-bg: rgba(15, 20, 32, 0.94);
+  --building-label-border: #ff0055;
+  --building-label-color: #f43f5e;
+  --station-label-bg: rgba(10, 15, 26, 0.95);
+  --station-label-border: #00f0ff;
+  --station-label-color: #00f0ff;
+  --grid-label-bg: rgba(10, 13, 22, 0.9);
+  --grid-label-color: #00f0ff;
+  --grid-label-border: rgba(0, 240, 255, 0.35);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--font-main);
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Leaflet Customizations */
+.leaflet-container {
+  background-color: var(--bg-dark) !important; /* Dark mode backdrop */
+  font-family: var(--font-era-body, var(--font-main)) !important;
+}
+
+.custom-poi-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #c0392b;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  font-size: 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: scale(1.25);
+    z-index: 1000 !important;
+  }
+}
+
+.custom-station-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2c3e50;
+  color: white;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  font-size: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+
+  &.transfer-hub {
+    background: #e67e22;
+    border-width: 3px;
+  }
+}
+
+.custom-route-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 11px;
+  color: white;
+
+  &.start {
+    background: #10b981;
+  }
+  &.end {
+    background: #ef4444;
+  }
+}
+
+/* Tooltip & Popups */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-surface-elevated) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-xl) !important;
+  padding: 6px !important;
+  backdrop-filter: blur(8px);
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-surface-elevated) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.leaflet-tooltip {
+  background: rgba(18, 21, 28, 0.94) !important;
+  backdrop-filter: blur(6px) !important;
+  color: #f1f5f9 !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  box-shadow: var(--shadow-lg) !important;
+  font-family: var(--font-era-body, var(--font-main)) !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+}
+
+/* Map Labels (Zoom & Era Dependent) */
+.map-district-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+
+  .district-title {
+    font-family: var(--font-era-map-district, var(--font-serif));
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--district-text-color, #3e2723);
+    opacity: 0.72;
+    text-shadow: var(--district-text-shadow, 0 1px 3px rgba(255, 255, 255, 0.9));
+    text-align: center;
+    white-space: nowrap;
+    transition: transform 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  }
+
+  .district-type {
+    font-family: var(--font-era-body, var(--font-main));
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--district-text-color, #5d4037);
+    text-align: center;
+    opacity: 0.65;
+    text-shadow: var(--district-text-shadow, 0 1px 2px rgba(255, 255, 255, 0.8));
+  }
+
+  &:hover .district-title {
+    color: var(--era-accent, #3b82f6);
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.map-natural-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+
+  .natural-title {
+    font-family: var(--font-era-map-feature, var(--font-serif));
+    font-style: italic;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+
+  .natural-subtitle {
+    font-family: var(--font-era-map-feature, var(--font-serif));
+    font-style: italic;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+
+  &.park {
+    .natural-title, .natural-subtitle {
+      color: #2e7d32;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 0 5px rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  &.water {
+    .natural-title, .natural-subtitle {
+      color: #1565c0;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 0 5px rgba(255, 255, 255, 0.85);
+    }
+  }
+
+  &:hover {
+    .natural-title, .natural-subtitle {
+      color: #f59e0b !important;
+      transform: scale(1.08);
+    }
+  }
+}
+
+.map-building-label {
+  background: var(--building-label-bg, rgba(255, 255, 255, 0.92));
+  border: 1px solid var(--building-label-border, #cbd5e1);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: var(--font-era-map-building, var(--font-main));
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--building-label-color, #1e293b);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  text-align: center;
+  transition: all 0.15s ease;
+
+  &.landmark {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    color: #92400e;
+    font-weight: 700;
+    font-size: 11px;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+  }
+}
+
+[data-era="contemporary_modern"] .map-building-label.landmark {
+  background: rgba(45, 30, 10, 0.95);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+[data-era="medieval"] .map-building-label.landmark {
+  background: rgba(55, 33, 12, 0.95);
+  border-color: #f59e0b;
+  color: #fbbf24;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+[data-era="victorian_steampunk"] .map-building-label.landmark {
+  background: rgba(48, 30, 15, 0.95);
+  border-color: #d97706;
+  color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4);
+}
+
+[data-era="cyberpunk_scifi"] .map-building-label.landmark {
+  background: rgba(18, 25, 40, 0.95);
+  border-color: #00f0ff;
+  color: #38bdf8;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
+  box-shadow: 0 2px 10px rgba(0, 240, 255, 0.4);
+}
+
+.map-road-label {
+  background: var(--road-label-bg, rgba(255, 255, 255, 0.9));
+  border: 1px solid var(--road-label-border, #94a3b8);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: var(--font-era-map-road, var(--font-main));
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--road-label-color, #334155);
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+
+  &.major {
+    font-weight: 700;
+    border-width: 1.5px;
+  }
+}
+
+.map-grid-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+
+  span {
+    font-family: var(--font-era-hud, var(--font-mono));
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--grid-label-bg, rgba(18, 21, 28, 0.85));
+    backdrop-filter: blur(4px);
+    color: var(--grid-label-color, #94a3b8);
+    border: 1px solid var(--grid-label-border, rgba(255, 255, 255, 0.12));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.road-hit-area {
+  cursor: pointer !important;
+}
+
+.transit-line-hit-area {
+  cursor: pointer !important;
+}
+
+/* Transit Station Markers (Distinct Stylized Cartographic Circles) */
+.map-transit-station-circle-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-station-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  .circle-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2.5px solid var(--station-color, #e11d48);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+  }
+
+  .circle-core {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--station-color, #e11d48);
+    z-index: 1;
+  }
+
+  &.hub {
+    width: 22px;
+    height: 22px;
+
+    .circle-ring {
+      border-width: 3.5px;
+      border-color: #f59e0b;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6), 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .circle-core {
+      width: 8px;
+      height: 8px;
+      background: #f59e0b;
+    }
+  }
+
+  &.multi-line {
+    width: 24px;
+    height: 24px;
+
+    .circle-ring {
+      border: none !important;
+      background: var(--station-conic, conic-gradient(#e11d48 0 180deg, #0284c7 180deg 360deg));
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 3.5px;
+        border-radius: 50%;
+        background: #ffffff;
+      }
+    }
+
+    .circle-core {
+      width: 8px;
+      height: 8px;
+      background: var(--station-conic, var(--station-color, #e11d48));
+      z-index: 2;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  &:hover {
+    transform: scale(1.35);
+    z-index: 1000 !important;
+  }
+}
+
+.map-station-name-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+
+  .station-line-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 3px;
+    vertical-align: 1px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  span {
+    font-family: var(--font-era-body, var(--font-main));
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--station-label-bg, rgba(18, 21, 28, 0.92));
+    backdrop-filter: blur(4px);
+    color: var(--station-label-color, #f1f5f9);
+    border: 1px solid var(--station-label-border, rgba(255, 255, 255, 0.18));
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+
+  &.hub span {
+    border-color: #f59e0b;
+    color: #fbbf24;
+    font-weight: 800;
+  }
+
+  &:hover span {
+    transform: scale(1.06);
+    border-color: var(--accent-primary);
+  }
+}
+

@@ -1,0 +1,130 @@
+<aside class="navigation-panel">
+  <div class="panel-header">
+    <div class="header-title">
+      <span class="header-icon">🧭</span>
+      <div>
+        <h3>City Wayfinding & Directions</h3>
+        <span class="subtext">Turn-by-turn routing for creative writers</span>
+      </div>
+    </div>
+    <button class="close-btn" (click)="close()">✕</button>
+  </div>
+
+  <div class="panel-body">
+    <!-- Travel Mode Switcher -->
+    <div class="mode-switcher">
+      <button
+        class="mode-btn"
+        [class.active]="state.travelMode() === 'walk'"
+        (click)="setTravelMode('walk')"
+        title="Walking Pace (5 km/h) - takes alleys, pedestrian ways, sidewalks"
+      >
+        <span>🚶</span> Walk
+      </button>
+      <button
+        class="mode-btn"
+        [class.active]="state.travelMode() === 'drive'"
+        (click)="setTravelMode('drive')"
+        title="Carriage / Vehicle (30-60 km/h) - takes roads, avenues, bridges"
+      >
+        <span>🚗</span> Drive
+      </button>
+      <button
+        class="mode-btn"
+        [class.active]="state.travelMode() === 'transit'"
+        (click)="setTravelMode('transit')"
+        title="Public Transit - combines walking with metro lines, trams, ferries"
+      >
+        <span>🚊</span> Transit
+      </button>
+    </div>
+
+    <!-- Waypoint Pickers -->
+    <div class="waypoints-box">
+      <!-- Start -->
+      <div class="waypoint-row">
+        <span class="pin start-pin">A</span>
+        <div class="input-wrapper">
+          <select [(ngModel)]="selectedStartId" (change)="onStartSelectChange()">
+            <option value="">-- Choose Origin Location --</option>
+            @for (opt of waypointOptions(); track opt.name) {
+              <option [value]="opt.name">{{ opt.name }} ({{ opt.type }})</option>
+            }
+          </select>
+          @if (state.routeStart()) {
+            <span class="current-label">{{ state.routeStart()?.name }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Swap Button -->
+      <button class="swap-btn" (click)="swapStartAndEnd()" title="Swap Origin and Destination">⇅</button>
+
+      <!-- Destination -->
+      <div class="waypoint-row">
+        <span class="pin end-pin">B</span>
+        <div class="input-wrapper">
+          <select [(ngModel)]="selectedEndId" (change)="onEndSelectChange()">
+            <option value="">-- Choose Destination Location --</option>
+            @for (opt of waypointOptions(); track opt.name) {
+              <option [value]="opt.name">{{ opt.name }} ({{ opt.type }})</option>
+            }
+          </select>
+          @if (state.routeEnd()) {
+            <span class="current-label">{{ state.routeEnd()?.name }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Route Action Buttons -->
+    <div class="action-row">
+      <button class="btn-calculate" (click)="calculateRoute()">
+        <span>🧭</span> Calculate Route
+      </button>
+      <button class="btn-clear" (click)="clearRoute()">Clear</button>
+    </div>
+
+    <!-- Route Result Details -->
+    @if (state.routeResult(); as res) {
+      <div class="route-result-card">
+        <div class="result-summary">
+          <div class="summary-item">
+            <span class="summary-label">Estimated Travel Time</span>
+            <span class="summary-value time-val">{{ res.totalTimeMinutes }} min</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Total Distance</span>
+            <span class="summary-value">
+              @if (res.totalDistanceMeters >= 1000) {
+                {{ (res.totalDistanceMeters / 1000).toFixed(2) }} km
+              } @else {
+                {{ res.totalDistanceMeters }} m
+              }
+            </span>
+          </div>
+        </div>
+
+        <!-- Step-by-Step Directions -->
+        <div class="directions-list">
+          <span class="directions-title">Turn-by-Turn Directions</span>
+          @for (step of res.steps; track $index) {
+            <div class="step-item">
+              <div class="step-marker">
+                @if (step.mode === 'transit') { 🚊 }
+                @else if (step.mode === 'walk') { 🚶 }
+                @else { 🚗 }
+              </div>
+              <div class="step-content">
+                <span class="step-instruction">{{ step.instruction }}</span>
+                @if (step.distanceMeters > 0) {
+                  <span class="step-meta">{{ step.distanceMeters }}m &bull; ~{{ step.estimatedMinutes }} min</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</aside>

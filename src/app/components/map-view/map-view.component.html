@@ -1,0 +1,434 @@
+<div class="map-wrapper">
+  <div #mapContainer class="map-container"></div>
+
+  <!-- Zoom & View Controls (Top Left) -->
+  <div class="map-control-group zoom-controls">
+    <button class="map-ctrl-btn" (click)="zoomIn()" title="Zoom In (+)">➕</button>
+    <button class="map-ctrl-btn" (click)="zoomOut()" title="Zoom Out (-)">➖</button>
+    <button class="map-ctrl-btn reset-btn" (click)="resetView()" title="Fit City to Screen">⛶</button>
+    <button
+      class="map-ctrl-btn jump-btn"
+      [class.active]="showJumpMenu()"
+      (click)="showJumpMenu.set(!showJumpMenu())"
+      title="Quick Jump to Sectors, Districts, or Landmarks"
+    >
+      🧭
+    </button>
+  </div>
+
+  <!-- Jump Menu Dropdown -->
+  @if (showJumpMenu()) {
+    <div class="jump-dropdown" (click)="$event.stopPropagation()">
+      <div class="dropdown-header">
+        <span class="title">🧭 Quick Navigation</span>
+        <button class="close-icon-btn" (click)="showJumpMenu.set(false)">✕</button>
+      </div>
+
+      <div class="jump-content">
+        <!-- Sectors (especially useful for 20000x2000!) -->
+        <div class="jump-section">
+          <div class="jump-section-title">
+            <span>Sectors (1 to {{ sectors().length }})</span>
+            <span class="subtext">Pan across wide map</span>
+          </div>
+          <div class="sector-grid">
+            @for (sec of sectors(); track sec.id) {
+              <button class="sector-btn" (click)="jumpToSector(sec)">
+                <span class="sec-badge">S{{ sec.id }}</span>
+                <span class="sec-range">{{ sec.startX }}m-{{ sec.endX }}m</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Districts -->
+        @if (state.currentMap().districts.length > 0) {
+          <div class="jump-section">
+            <div class="jump-section-title">
+              <span>Districts</span>
+              <span class="subtext">{{ state.currentMap().districts.length }} zones</span>
+            </div>
+            <div class="jump-list">
+              @for (dist of state.currentMap().districts; track dist.id) {
+                <button class="jump-list-item" (click)="jumpToFeature('district', dist.id)">
+                  <span class="color-indicator" [style.background]="dist.color || '#3b82f6'"></span>
+                  <span class="item-name">{{ dist.name }}</span>
+                  <span class="item-meta">{{ dist.type }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Landmarks & Major Buildings -->
+        @if (landmarkBuildings().length > 0) {
+          <div class="jump-section">
+            <div class="jump-section-title">
+              <span>Landmarks &amp; Key Buildings</span>
+              <span class="subtext">{{ landmarkBuildings().length }} sites</span>
+            </div>
+            <div class="jump-list">
+              @for (bld of landmarkBuildings(); track bld.id) {
+                <button class="jump-list-item" (click)="jumpToFeature('building', bld.id)">
+                  <span class="item-icon">🏛️</span>
+                  <span class="item-name">{{ bld.name }}</span>
+                  <span class="item-meta">{{ bld.type.replace('_', ' ') }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Points of Interest -->
+        @if (allPois().length > 0) {
+          <div class="jump-section">
+            <div class="jump-section-title">
+              <span>Points of Interest</span>
+              <span class="subtext">{{ allPois().length }} POIs</span>
+            </div>
+            <div class="jump-list">
+              @for (poi of allPois(); track poi.id) {
+                <button class="jump-list-item" (click)="jumpToFeature('poi', poi.id)">
+                  <span class="item-icon">📍</span>
+                  <span class="item-name">{{ poi.name }}</span>
+                  <span class="item-meta">{{ poi.category }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Layers Toggle Widget (Top Right) -->
+  <div class="layers-widget">
+    <button
+      class="layers-toggle-btn"
+      [class.active]="showLayersMenu()"
+      (click)="showLayersMenu.set(!showLayersMenu())"
+      title="Toggle Map Layers & Feature Visibility"
+    >
+      <span class="btn-icon">🥞</span>
+      <span class="btn-text">Layers</span>
+    </button>
+
+    @if (showLayersMenu()) {
+      <div class="layers-dropdown" (click)="$event.stopPropagation()">
+        <div class="dropdown-header">
+          <span class="title">Map Layers</span>
+          <span class="zoom-badge">Zoom: {{ currentZoom().toFixed(1) }}x</span>
+        </div>
+
+        <div class="layers-list">
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().districts"
+              (change)="state.toggleLayer('districts')"
+            />
+            <span class="layer-name">Districts &amp; Zones</span>
+          </label>
+
+          <label class="layer-checkbox indent">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().districtLabels"
+              (change)="state.toggleLayer('districtLabels')"
+            />
+            <span class="layer-name">District Names</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().waterParks"
+              (change)="state.toggleLayer('waterParks')"
+            />
+            <span class="layer-name">Water &amp; Parks</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().topography"
+              (change)="state.toggleLayer('topography')"
+            />
+            <span class="layer-name">⛰️ Topography (Cliffs, Ridges)</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().isochrone"
+              (change)="state.toggleLayer('isochrone')"
+            />
+            <span class="layer-name">⏱️ Travel Time Reach Rings</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().roads"
+              (change)="state.toggleLayer('roads')"
+            />
+            <span class="layer-name">Roads &amp; Streets</span>
+          </label>
+
+          <label class="layer-checkbox indent">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().roadLabels"
+              (change)="state.toggleLayer('roadLabels')"
+            />
+            <span class="layer-name">Street Names (Zoom in)</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().buildings"
+              (change)="state.toggleLayer('buildings')"
+            />
+            <span class="layer-name">Building Footprints</span>
+          </label>
+
+          <label class="layer-checkbox indent">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().buildingLabels"
+              (change)="state.toggleLayer('buildingLabels')"
+            />
+            <span class="layer-name">Building Names (Zoom in)</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().transit"
+              (change)="state.toggleLayer('transit')"
+            />
+            <span class="layer-name">Transit Lines / Tracks</span>
+          </label>
+
+          <label class="layer-checkbox indent">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().transitStations"
+              (change)="state.toggleLayer('transitStations')"
+            />
+            <span class="layer-name">Transit Stations / Stops</span>
+          </label>
+
+          <label class="layer-checkbox indent">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().stationLabels"
+              (change)="state.toggleLayer('stationLabels')"
+            />
+            <span class="layer-name">Station Names (Zoom in)</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().pois"
+              (change)="state.toggleLayer('pois')"
+            />
+            <span class="layer-name">Points of Interest</span>
+          </label>
+
+          <label class="layer-checkbox">
+            <input
+              type="checkbox"
+              [checked]="state.layerVisibility().grid"
+              (change)="state.toggleLayer('grid')"
+            />
+            <span class="layer-name">Alphanumeric Grid</span>
+          </label>
+
+          @if (state.layerVisibility().grid) {
+            <div class="grid-size-selector">
+              <span class="grid-sub-label">Cell Size (m):</span>
+              <div class="grid-btn-row">
+                <button
+                  type="button"
+                  class="grid-step-btn"
+                  [class.active]="(state.currentMap().gridStep || 200) === 100"
+                  (click)="setGridStep(100)"
+                >
+                  100m
+                </button>
+                <button
+                  type="button"
+                  class="grid-step-btn"
+                  [class.active]="(state.currentMap().gridStep || 200) === 200"
+                  (click)="setGridStep(200)"
+                >
+                  200m
+                </button>
+                <button
+                  type="button"
+                  class="grid-step-btn"
+                  [class.active]="(state.currentMap().gridStep || 200) === 400"
+                  (click)="setGridStep(400)"
+                >
+                  400m
+                </button>
+                <button
+                  type="button"
+                  class="grid-step-btn"
+                  [class.active]="(state.currentMap().gridStep || 200) === 500"
+                  (click)="setGridStep(500)"
+                >
+                  500m
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Coordinate & Scale Indicator at bottom left -->
+  <div class="hud-coords">
+    <span>X: {{ cursorCoords.x }} | Y: {{ cursorCoords.y }}</span>
+    <span class="divider">&bull;</span>
+    <span>Zoom: {{ currentZoom().toFixed(1) }}x</span>
+    <span class="divider">&bull;</span>
+    <span>Grid: {{ state.currentMap().width }}×{{ state.currentMap().height }}</span>
+    <span class="divider">&bull;</span>
+    <span>1 unit = {{ Math.round(1000 / state.currentMap().unitsPerKm) }}m</span>
+  </div>
+
+  <!-- Minimap Overview Widget (Bottom Right) -->
+  <div class="minimap-widget" [class.collapsed]="!showMiniMap()">
+    <div class="minimap-header" (click)="toggleMiniMap()">
+      <div class="header-left">
+        <span class="header-icon">🗺️</span>
+        <span class="header-title">Minimap ({{ state.currentMap().width }}×{{ state.currentMap().height }})</span>
+      </div>
+      <button class="toggle-btn" [title]="showMiniMap() ? 'Collapse Minimap' : 'Expand Minimap'">
+        {{ showMiniMap() ? '▼' : '▲' }}
+      </button>
+    </div>
+
+    @if (showMiniMap()) {
+      <div
+        class="minimap-body"
+        (click)="onMinimapClick($event)"
+        title="Click anywhere on minimap to pan instantly"
+      >
+        <canvas #minimapCanvas width="280" height="70"></canvas>
+        <div
+          class="minimap-viewport-box"
+          [style.left]="viewportBox().left"
+          [style.top]="viewportBox().top"
+          [style.width]="viewportBox().width"
+          [style.height]="viewportBox().height"
+        ></div>
+      </div>
+    }
+  </div>
+
+  <!-- Isochrone Reach Analysis Floating HUD -->
+  @if (state.activeTool() === 'isochrone' || state.currentIsochrone()) {
+    <div class="isochrone-hud-card">
+      <div class="hud-header">
+        <div class="hud-title-row">
+          <span class="hud-icon">⏱️</span>
+          <div>
+            <div class="hud-title">Isochrone Reach Analysis</div>
+            <div class="hud-sub">
+              {{ state.currentIsochrone() ? 'Network travel reach from origin point' : 'Click anywhere on the map to calculate reach bands' }}
+            </div>
+          </div>
+        </div>
+        @if (state.currentIsochrone()) {
+          <button class="clear-iso-btn" (click)="state.clearIsochrone()" title="Clear Reach Rings">✕</button>
+        }
+      </div>
+
+      <div class="mode-buttons">
+        <button
+          type="button"
+          class="mode-btn"
+          [class.active]="isochroneMode() === 'walk'"
+          (click)="setIsochroneMode('walk')"
+        >
+          🚶 Walk (4.5 km/h)
+        </button>
+        <button
+          type="button"
+          class="mode-btn"
+          [class.active]="isochroneMode() === 'carriage'"
+          (click)="setIsochroneMode('carriage')"
+        >
+          🐎 Road / Carriage (14 km/h)
+        </button>
+        <button
+          type="button"
+          class="mode-btn"
+          [class.active]="isochroneMode() === 'transit'"
+          (click)="setIsochroneMode('transit')"
+        >
+          🚆 Transit (40 km/h)
+        </button>
+      </div>
+
+      @if (state.currentIsochrone(); as iso) {
+        <div class="rings-legend">
+          @for (ring of iso.rings; track ring.minutes) {
+            <div class="legend-item">
+              <span class="legend-swatch" [style.background]="ring.color"></span>
+              <span class="legend-text">{{ ring.minutes }} min</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Drawing Mode Floating Toolbar -->
+  @if (state.activeDrawingPoints().length > 0) {
+    <div class="drawing-floating-bar">
+      <span class="instruction">
+        Placing <strong>{{ state.activeTool().replace('draw_', '').replace('add_', '') | uppercase }}</strong>
+        ({{ state.activeDrawingPoints().length }} points)
+      </span>
+
+      @if (state.activeTool() === 'draw_topo') {
+        <div class="topo-type-selector">
+          <button
+            type="button"
+            class="topo-btn"
+            [class.active]="topoDrawType() === 'cliff'"
+            (click)="topoDrawType.set('cliff')"
+          >
+            Cliff
+          </button>
+          <button
+            type="button"
+            class="topo-btn"
+            [class.active]="topoDrawType() === 'ridge'"
+            (click)="topoDrawType.set('ridge')"
+          >
+            Ridge
+          </button>
+          <button
+            type="button"
+            class="topo-btn"
+            [class.active]="topoDrawType() === 'contour'"
+            (click)="topoDrawType.set('contour')"
+          >
+            Contour
+          </button>
+        </div>
+      }
+
+      <button class="btn-finish" (click)="finishDrawing()">✓ Finish</button>
+      <button class="btn-cancel" (click)="cancelDrawing()">✕ Cancel</button>
+    </div>
+  }
+</div>
