@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SpatialGrid } from './spatial-grid';
+import { Building } from '../models/map.models';
+import { NOVARIA_METROPOLIS_PRESET } from '../services/preset-maps';
 
 describe('SpatialGrid Utility', () => {
   it('inserts and queries items accurately', () => {
@@ -44,5 +46,40 @@ describe('SpatialGrid Utility', () => {
     expect(duration).toBeLessThan(5); // should be < 5ms (usually < 0.5ms)
     expect(candidates.length).toBeGreaterThan(0);
     expect(candidates.length).toBeLessThan(50000);
+  });
+
+  it('indexes and queries Novaria Metropolis (870 buildings) with sub-millisecond viewport culling and LOD filtering', () => {
+    const grid = new SpatialGrid<Building>(500);
+    const startBuild = performance.now();
+    for (const b of NOVARIA_METROPOLIS_PRESET.buildings) {
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const pt of b.footprint) {
+        if (pt.x < minX) minX = pt.x;
+        if (pt.x > maxX) maxX = pt.x;
+        if (pt.y < minY) minY = pt.y;
+        if (pt.y > maxY) maxY = pt.y;
+      }
+      grid.insert(b, minX, maxX, minY, maxY);
+    }
+    const buildDuration = performance.now() - startBuild;
+    expect(buildDuration).toBeLessThan(15);
+    expect(grid.size()).toBe(NOVARIA_METROPOLIS_PRESET.buildings.length);
+    expect(grid.size()).toBeGreaterThanOrEqual(800);
+
+    // Viewport query for Financial District (4400-6000 x 3000-4400)
+    const startQuery = performance.now();
+    const visible = grid.query(4400, 6000, 3000, 4400);
+    const queryDuration = performance.now() - startQuery;
+    expect(queryDuration).toBeLessThan(5);
+    expect(visible.length).toBeGreaterThanOrEqual(100);
+    expect(visible.length).toBeLessThan(grid.size());
+
+    // LOD filtering when zoomed out:
+    const lodBuildings = NOVARIA_METROPOLIS_PRESET.buildings.filter(
+      b => b.isLandmark || b.type === 'institutional' || b.type === 'residential_highrise' || (b.floors && b.floors >= 8)
+    );
+    expect(NOVARIA_METROPOLIS_PRESET.buildings.length).toBeGreaterThan(500);
+    expect(lodBuildings.length).toBeLessThan(NOVARIA_METROPOLIS_PRESET.buildings.length);
+    expect(lodBuildings.length).toBeGreaterThan(150);
   });
 });

@@ -64,4 +64,47 @@ describe('ExportService Performance & Dimensions', () => {
     expect(svg).toContain('<svg');
     expect(svg).toContain('Novaria');
   });
+
+  it('exports Novaria metropolis with all 870 buildings, transit lines, and topography in under 150ms', () => {
+    const start = performance.now();
+    const svg = service.exportSVG(NOVARIA_METROPOLIS_PRESET, {
+      title: 'Novaria Metropolis',
+      subtitle: 'Complete Detail Atlas',
+      theme: 'modern_atlas',
+      trimSize: 'custom',
+      showGutterGuide: false,
+      resolutionScale: 1,
+      format: 'svg',
+      jpegQuality: 0.9,
+      showBorder: true,
+      showCompassRose: true,
+      showScaleBar: true,
+      showGrid: true,
+      showTitleBox: true,
+      showLegend: true,
+      showDistricts: true,
+      showDistrictLabels: true,
+      showWater: true,
+      showParks: true,
+      showNaturalFeatureLabels: true,
+      showRoads: true,
+      showRoadLabels: true,
+      showMinorRoads: true,
+      showBuildings: true,
+      showBuildingLabels: true,
+      onlyLandmarkBuildingLabels: true,
+      showTransitLines: true,
+      showTransitStations: true,
+      showStationLabels: true,
+      showPois: true,
+      showPoiLabels: true,
+      showTopography: true
+    });
+    const duration = performance.now() - start;
+
+    expect(duration).toBeLessThan(150);
+    expect(svg.length).toBeGreaterThan(50000);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('Grand Central');
+  });
 });
