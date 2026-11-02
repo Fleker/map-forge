@@ -950,6 +950,17 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       return mapData.buildings;
     }
 
+    const zoom = this.map.getZoom();
+
+    // Multi-Scale Level of Detail (LOD):
+    // When zoomed out on large maps (zoom < -0.5), render prominent landmarks, institutional anchors,
+    // and highrises to avoid sub-pixel rendering thrash across tens of thousands of tiny footprints.
+    if (zoom < -0.5 && mapData.buildings.length > 500) {
+      return mapData.buildings.filter(
+        b => b.isLandmark || b.type === 'institutional' || b.type === 'residential_highrise' || (b.floors && b.floors >= 8)
+      );
+    }
+
     const bounds = this.map.getBounds();
     // Add a 25% padding buffer around visible viewport to pre-render adjacent buildings
     const padX = (bounds.getEast() - bounds.getWest()) * 0.25;
