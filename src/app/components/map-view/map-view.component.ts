@@ -229,7 +229,13 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       this.handleMapClick({ x: Math.round(e.latlng.lng), y: Math.round(e.latlng.lat) });
     });
 
-    this.map.on('move zoom zoomend', () => {
+    this.map.on('move', () => {
+      if (this.map) {
+        this.updateMiniMapViewport();
+      }
+    });
+
+    this.map.on('zoomend', () => {
       if (this.map) {
         this.currentZoom.set(this.map.getZoom());
         this.updateZoomLabels();
@@ -781,7 +787,11 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       this.buildingsGroup.addLayer(poly);
 
       // Building Label (Center)
-      if (bld.name) {
+      // For high performance on large cities, instantiate DOM markers for landmarks/institutions
+      // or for cities with up to 150 buildings. Generic buildings in massive cities are drawn on Canvas
+      // to avoid 20,000+ DOM nodes freezing browser paint.
+      const shouldCreateMarker = isLandmark || bld.type === 'institutional' || mapData.buildings.length <= 150;
+      if (bld.name && shouldCreateMarker) {
         const bldLabel = L.marker(L.latLng(bld.center.y, bld.center.x), {
           icon: L.divIcon({
             className: `map-building-label ${isLandmark ? 'landmark' : ''}`,

@@ -309,6 +309,8 @@ export interface PopulationStats {
     jobs: number;
     buildingCount: number;
     densityPerKm2: number;
+    targetDensity?: number;
+    areaKm2?: number;
   }[];
   realismAnalysis: {
     title: string;

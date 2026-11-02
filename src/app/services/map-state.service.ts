@@ -16,7 +16,7 @@ import {
   TransitStation,
   LayerVisibility
 } from '../models/map.models';
-import { AETHELBURG_PRESET, BLANK_MAP_PRESET, OAKHAVEN_PRESET } from './preset-maps';
+import { AETHELBURG_PRESET, BLANK_MAP_PRESET, NOVARIA_METROPOLIS_PRESET, OAKHAVEN_PRESET } from './preset-maps';
 
 const STORAGE_KEY = 'mapforge_saved_city_v1';
 
@@ -130,16 +130,23 @@ export class MapStateService {
 
   saveToLocalStorage() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.currentMap()));
+      const serialized = JSON.stringify(this.currentMap());
+      // Prevent browser QuotaExceededError crashes when dealing with large high-population maps (> 4.5MB)
+      if (serialized.length > 4_500_000) {
+        console.warn('Map data exceeds 4.5MB localStorage threshold. Skipping local storage update; please use "Export JSON" to persist large metropolises.');
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY, serialized);
     } catch (e) {
-      console.warn('Could not save to localStorage:', e);
+      console.warn('Could not save to localStorage (quota or disabled):', e);
     }
   }
 
-  loadPreset(presetKey: 'aethelburg' | 'oakhaven' | 'blank') {
+  loadPreset(presetKey: 'aethelburg' | 'oakhaven' | 'novaria' | 'blank') {
     let preset: CityMap;
     if (presetKey === 'aethelburg') preset = AETHELBURG_PRESET;
     else if (presetKey === 'oakhaven') preset = OAKHAVEN_PRESET;
+    else if (presetKey === 'novaria') preset = NOVARIA_METROPOLIS_PRESET;
     else preset = BLANK_MAP_PRESET;
 
     const cloned = JSON.parse(JSON.stringify(preset));

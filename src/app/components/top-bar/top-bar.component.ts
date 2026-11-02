@@ -31,7 +31,7 @@ export class TopBarComponent {
 
   onPresetChange(event: Event) {
     const val = (event.target as HTMLSelectElement).value;
-    if (val === 'aethelburg' || val === 'oakhaven' || val === 'blank') {
+    if (val === 'aethelburg' || val === 'oakhaven' || val === 'novaria' || val === 'blank') {
       if (confirm('Load preset? Any unsaved changes on current map will be replaced.')) {
         this.state.loadPreset(val);
       }

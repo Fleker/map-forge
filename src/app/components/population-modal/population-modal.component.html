@@ -75,25 +75,27 @@
             <thead>
               <tr>
                 <th>District</th>
+                <th>Area (km²)</th>
                 <th>Population</th>
                 <th>Jobs</th>
-                <th>Density (people/km²)</th>
-                <th>Buildings</th>
+                <th>Density</th>
+                <th>Buildings Mapped</th>
               </tr>
             </thead>
             <tbody>
               @for (d of stats().districtStats; track d.districtId) {
                 <tr>
                   <td class="font-medium">{{ d.districtName }}</td>
+                  <td class="font-mono text-purple">{{ d.areaKm2 ? d.areaKm2 + ' km²' : '-' }}</td>
                   <td class="font-mono text-blue">{{ d.population.toLocaleString() }}</td>
                   <td class="font-mono text-emerald">{{ d.jobs.toLocaleString() }}</td>
-                  <td class="font-mono">{{ d.densityPerKm2.toLocaleString() }}</td>
+                  <td class="font-mono">{{ d.densityPerKm2.toLocaleString() }}/km²</td>
                   <td class="font-mono">{{ d.buildingCount }}</td>
                 </tr>
               }
               @if (stats().districtStats.length === 0) {
                 <tr>
-                  <td colspan="5" class="empty-cell">No districts drawn yet. Use the District tool to outline neighborhoods.</td>
+                  <td colspan="6" class="empty-cell">No districts drawn yet. Use the District tool to outline neighborhoods.</td>
                 </tr>
               }
             </tbody>
