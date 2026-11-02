@@ -693,19 +693,71 @@ export class ExportService {
       });
     }
 
-    // 7. Buildings (3D Shadows & Footprints)
-    if (settings.showBuildings) {
-      cityMap.buildings.forEach(bld => {
-        if (bld.footprint.length < 3) return;
-        const isLandmark = bld.isLandmark || bld.type === 'institutional';
-        ctx.fillStyle = isLandmark ? colors.landmarkFill : colors.buildingFill;
-        ctx.strokeStyle = isLandmark ? colors.landmarkStroke : colors.buildingStroke;
-        ctx.lineWidth = Math.max(0.5, (isLandmark ? 2 : 1) * scale);
+    // 7. Buildings (3D Shadows & Footprints) - Batched rendering for massive performance on large cities
+    if (settings.showBuildings && cityMap.buildings.length > 0) {
+      const regularBlds: typeof cityMap.buildings = [];
+      const landmarkBlds: typeof cityMap.buildings = [];
 
-        // Shadow / 3D extrusion effect - skip subpixel shadow (< 0.6px) for massive performance gains on low scales
+      for (let i = 0; i < cityMap.buildings.length; i++) {
+        const b = cityMap.buildings[i];
+        if (b.footprint.length >= 3) {
+          if (b.isLandmark || b.type === 'institutional') {
+            landmarkBlds.push(b);
+          } else {
+            regularBlds.push(b);
+          }
+        }
+      }
+
+      // Batch draw regular building shadows
+      if (regularBlds.length > 0) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        ctx.beginPath();
+        let hasShadows = false;
+        for (let i = 0; i < regularBlds.length; i++) {
+          const bld = regularBlds[i];
+          const shadowOffset = Math.min(6, Math.max(1, (bld.floors || 1) * 0.8)) * scale;
+          if (shadowOffset >= 0.6) {
+            hasShadows = true;
+            for (let j = 0; j < bld.footprint.length; j++) {
+              const pt = bld.footprint[j];
+              const cx = toCanvasX(pt.x) + shadowOffset;
+              const cy = toCanvasY(pt.y) + shadowOffset;
+              if (j === 0) ctx.moveTo(cx, cy);
+              else ctx.lineTo(cx, cy);
+            }
+            ctx.closePath();
+          }
+        }
+        if (hasShadows) {
+          ctx.fill();
+        }
+
+        // Batch draw regular building footprints & strokes
+        ctx.fillStyle = colors.buildingFill;
+        ctx.strokeStyle = colors.buildingStroke;
+        ctx.lineWidth = Math.max(0.5, 1 * scale);
+        ctx.beginPath();
+        for (let i = 0; i < regularBlds.length; i++) {
+          const bld = regularBlds[i];
+          for (let j = 0; j < bld.footprint.length; j++) {
+            const pt = bld.footprint[j];
+            const cx = toCanvasX(pt.x);
+            const cy = toCanvasY(pt.y);
+            if (j === 0) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+          }
+          ctx.closePath();
+        }
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Draw Landmark Buildings with prominent highlights
+      landmarkBlds.forEach(bld => {
         const shadowOffset = Math.min(6, Math.max(1, (bld.floors || 1) * 0.8)) * scale;
         if (shadowOffset >= 0.6) {
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
           ctx.beginPath();
           bld.footprint.forEach((pt, idx) => {
             const cx = toCanvasX(pt.x) + shadowOffset;
@@ -717,8 +769,9 @@ export class ExportService {
           ctx.fill();
         }
 
-        // Building base
-        ctx.fillStyle = isLandmark ? colors.landmarkFill : colors.buildingFill;
+        ctx.fillStyle = colors.landmarkFill;
+        ctx.strokeStyle = colors.landmarkStroke;
+        ctx.lineWidth = Math.max(0.5, 2 * scale);
         ctx.beginPath();
         bld.footprint.forEach((pt, idx) => {
           const cx = toCanvasX(pt.x);
