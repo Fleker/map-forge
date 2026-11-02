@@ -5,6 +5,7 @@ import { MapStateService } from '../../services/map-state.service';
 import { DemographicsService } from '../../services/demographics.service';
 import { RoutingService } from '../../services/routing.service';
 import { IsochroneService } from '../../services/isochrone.service';
+import { SpatialGrid } from '../../utils/spatial-grid';
 import { Building, CityMap, District, NaturalFeature, POI, Point2D, Road, TopoFeature, TopoType, TransitLine, TransitStation } from '../../models/map.models';
 
 @Component({
@@ -46,6 +47,10 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   private selectionGroup = L.layerGroup();
   private routeLayerGroup = L.layerGroup();
   private drawingLayerGroup = L.layerGroup();
+
+  // Spatial index for high-performance viewport culling on large cities
+  private buildingSpatialGrid = new SpatialGrid<Building>(800);
+  private currentRenderedBuildingIds = new Set<string>();
 
   cursorCoords: Point2D = { x: 0, y: 0 };
   currentZoom = signal<number>(0);
@@ -238,7 +243,15 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     this.map.on('zoomend', () => {
       if (this.map) {
         this.currentZoom.set(this.map.getZoom());
+        this.updateVisibleBuildings();
         this.updateZoomLabels();
+        this.updateMiniMapViewport();
+      }
+    });
+
+    this.map.on('moveend', () => {
+      if (this.map) {
+        this.updateVisibleBuildings();
         this.updateMiniMapViewport();
       }
     });
@@ -731,87 +744,22 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       }
     });
 
-    // 4. Buildings & Building Labels
+    // 4. Index & Render Buildings with Viewport Spatial Culling
+    this.buildingSpatialGrid.clear();
     mapData.buildings.forEach(bld => {
-      const isLandmark = bld.isLandmark || bld.type === 'institutional';
-      const latLngs = bld.footprint.map(p => L.latLng(p.y, p.x));
-
-      let bldStroke = isLandmark ? '#d97706' : '#5c4938';
-      let bldFill = isLandmark ? '#4d3219' : '#2e231a';
-      if (era === 'victorian_steampunk') {
-        bldStroke = isLandmark ? '#d97706' : '#544436';
-        bldFill = isLandmark ? '#442e1a' : '#28211b';
-      } else if (era === 'contemporary_modern') {
-        bldStroke = isLandmark ? '#f59e0b' : '#64748b';
-        bldFill = isLandmark ? '#78350f' : '#273142';
-      } else if (era === 'cyberpunk_scifi') {
-        bldStroke = isLandmark ? '#00f0ff' : '#475569';
-        bldFill = isLandmark ? '#164e63' : '#141a29';
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (let i = 0; i < bld.footprint.length; i++) {
+        const pt = bld.footprint[i];
+        if (pt.x < minX) minX = pt.x;
+        if (pt.x > maxX) maxX = pt.x;
+        if (pt.y < minY) minY = pt.y;
+        if (pt.y > maxY) maxY = pt.y;
       }
-
-      const poly = L.polygon(latLngs, {
-        renderer: this.canvasRenderer,
-        color: bldStroke,
-        fillColor: bldFill,
-        fillOpacity: 0.88,
-        weight: isLandmark ? 2 : 1
-      });
-
-      const { population, jobs } = this.demographics.estimateBuildingPopAndJobs(bld, mapData.era);
-      const tooltipHtml = `
-        <div style="font-family: var(--font-main);">
-          <strong style="color: ${isLandmark ? '#f59e0b' : '#f1f5f9'}; font-size: 13px;">${bld.name}</strong>
-          <div style="font-size: 11px; color: #94a3b8; margin: 2px 0;">
-            ${bld.type.replace('_', ' ').toUpperCase()} &bull; ${bld.floors} Floors
-          </div>
-          <div style="font-size: 11px; color: #38bdf8;">
-            Pop: <b>${population}</b> | Jobs: <b>${jobs}</b>
-          </div>
-          ${bld.chapterReferences?.length ? `<div style="font-size: 10px; color: #a78bfa; margin-top: 4px;">🔖 ${bld.chapterReferences.join(', ')}</div>` : ''}
-          ${bld.notes ? `<div style="font-size: 10px; color: #cbd5e1; margin-top: 4px; max-width: 220px; font-style: italic;">"${bld.notes}"</div>` : ''}
-        </div>
-      `;
-
-      poly.bindTooltip(tooltipHtml, { sticky: true });
-      poly.on('click', (e) => {
-        if (this.state.activeTool() === 'select') {
-          L.DomEvent.stopPropagation(e);
-          this.state.selectedFeature.set({ type: 'building', id: bld.id });
-        } else if (this.state.activeTool() === 'route') {
-          L.DomEvent.stopPropagation(e);
-          this.handleRoutePointPick(bld.name, bld.center);
-        } else if (this.state.activeTool() !== 'pan') {
-          this.handleMapClick({ x: Math.round(e.latlng.lng), y: Math.round(e.latlng.lat) });
-        }
-      });
-      this.buildingsGroup.addLayer(poly);
-
-      // Building Label (Center)
-      // For high performance on large cities, instantiate DOM markers for landmarks/institutions
-      // or for cities with up to 150 buildings. Generic buildings in massive cities are drawn on Canvas
-      // to avoid 20,000+ DOM nodes freezing browser paint.
-      const shouldCreateMarker = isLandmark || bld.type === 'institutional' || mapData.buildings.length <= 150;
-      if (bld.name && shouldCreateMarker) {
-        const bldLabel = L.marker(L.latLng(bld.center.y, bld.center.x), {
-          icon: L.divIcon({
-            className: `map-building-label ${isLandmark ? 'landmark' : ''}`,
-            html: `<span>${bld.name}</span>`,
-            iconSize: [140, 22],
-            iconAnchor: [70, 11]
-          }),
-          interactive: true
-        });
-        bldLabel.on('click', (e) => {
-          if (this.state.activeTool() === 'select') {
-            L.DomEvent.stopPropagation(e);
-            this.state.selectedFeature.set({ type: 'building', id: bld.id });
-          } else if (this.state.activeTool() !== 'pan') {
-            this.handleMapClick({ x: Math.round(e.latlng.lng), y: Math.round(e.latlng.lat) });
-          }
-        });
-        this.buildingLabelsGroup.addLayer(bldLabel);
-      }
+      this.buildingSpatialGrid.insert(bld, minX, maxX, minY, maxY);
     });
+
+    const visibleBuildings = this.getVisibleBuildings();
+    this.renderBuildingList(visibleBuildings);
 
     // 5. Transit Lines
     mapData.transitLines.forEach(line => {
@@ -994,6 +942,125 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
 
     // Sync visibility with current zoom level
     this.syncLayerVisibility();
+  }
+
+  private getVisibleBuildings(): Building[] {
+    const mapData = this.state.currentMap();
+    if (!this.map || mapData.buildings.length <= 300) {
+      return mapData.buildings;
+    }
+
+    const bounds = this.map.getBounds();
+    // Add a 25% padding buffer around visible viewport to pre-render adjacent buildings
+    const padX = (bounds.getEast() - bounds.getWest()) * 0.25;
+    const padY = (bounds.getNorth() - bounds.getSouth()) * 0.25;
+    const minX = bounds.getWest() - padX;
+    const maxX = bounds.getEast() + padX;
+    const minY = bounds.getSouth() - padY;
+    const maxY = bounds.getNorth() + padY;
+
+    return this.buildingSpatialGrid.query(minX, maxX, minY, maxY);
+  }
+
+  private updateVisibleBuildings() {
+    const mapData = this.state.currentMap();
+    if (mapData.buildings.length <= 300) return;
+
+    const visible = this.getVisibleBuildings();
+    if (
+      visible.length === this.currentRenderedBuildingIds.size &&
+      visible.every(b => this.currentRenderedBuildingIds.has(b.id))
+    ) {
+      return;
+    }
+
+    this.renderBuildingList(visible);
+  }
+
+  private renderBuildingList(buildings: Building[]) {
+    this.buildingsGroup.clearLayers();
+    this.buildingLabelsGroup.clearLayers();
+    this.currentRenderedBuildingIds = new Set(buildings.map(b => b.id));
+
+    const mapData = this.state.currentMap();
+    const era = mapData.era;
+
+    buildings.forEach(bld => {
+      const isLandmark = bld.isLandmark || bld.type === 'institutional';
+      const latLngs = bld.footprint.map(p => L.latLng(p.y, p.x));
+
+      let bldStroke = isLandmark ? '#d97706' : '#5c4938';
+      let bldFill = isLandmark ? '#4d3219' : '#2e231a';
+      if (era === 'victorian_steampunk') {
+        bldStroke = isLandmark ? '#d97706' : '#544436';
+        bldFill = isLandmark ? '#442e1a' : '#28211b';
+      } else if (era === 'contemporary_modern') {
+        bldStroke = isLandmark ? '#f59e0b' : '#64748b';
+        bldFill = isLandmark ? '#78350f' : '#273142';
+      } else if (era === 'cyberpunk_scifi') {
+        bldStroke = isLandmark ? '#00f0ff' : '#475569';
+        bldFill = isLandmark ? '#164e63' : '#141a29';
+      }
+
+      const poly = L.polygon(latLngs, {
+        renderer: this.canvasRenderer,
+        color: bldStroke,
+        fillColor: bldFill,
+        fillOpacity: 0.88,
+        weight: isLandmark ? 2 : 1
+      });
+
+      const { population, jobs } = this.demographics.estimateBuildingPopAndJobs(bld, mapData.era);
+      const tooltipHtml = `
+        <div style="font-family: var(--font-main);">
+          <strong style="color: ${isLandmark ? '#f59e0b' : '#f1f5f9'}; font-size: 13px;">${bld.name}</strong>
+          <div style="font-size: 11px; color: #94a3b8; margin: 2px 0;">
+            ${bld.type.replace('_', ' ').toUpperCase()} &bull; ${bld.floors} Floors
+          </div>
+          <div style="font-size: 11px; color: #38bdf8;">
+            Pop: <b>${population}</b> | Jobs: <b>${jobs}</b>
+          </div>
+          ${bld.chapterReferences?.length ? `<div style="font-size: 10px; color: #a78bfa; margin-top: 4px;">🔖 ${bld.chapterReferences.join(', ')}</div>` : ''}
+          ${bld.notes ? `<div style="font-size: 10px; color: #cbd5e1; margin-top: 4px; max-width: 220px; font-style: italic;">"${bld.notes}"</div>` : ''}
+        </div>
+      `;
+
+      poly.bindTooltip(tooltipHtml, { sticky: true });
+      poly.on('click', (e) => {
+        if (this.state.activeTool() === 'select') {
+          L.DomEvent.stopPropagation(e);
+          this.state.selectedFeature.set({ type: 'building', id: bld.id });
+        } else if (this.state.activeTool() === 'route') {
+          L.DomEvent.stopPropagation(e);
+          this.handleRoutePointPick(bld.name, bld.center);
+        } else if (this.state.activeTool() !== 'pan') {
+          this.handleMapClick({ x: Math.round(e.latlng.lng), y: Math.round(e.latlng.lat) });
+        }
+      });
+      this.buildingsGroup.addLayer(poly);
+
+      const shouldCreateMarker = isLandmark || bld.type === 'institutional' || mapData.buildings.length <= 150;
+      if (bld.name && shouldCreateMarker) {
+        const bldLabel = L.marker(L.latLng(bld.center.y, bld.center.x), {
+          icon: L.divIcon({
+            className: `map-building-label ${isLandmark ? 'landmark' : ''}`,
+            html: `<span>${bld.name}</span>`,
+            iconSize: [140, 22],
+            iconAnchor: [70, 11]
+          }),
+          interactive: true
+        });
+        bldLabel.on('click', (e) => {
+          if (this.state.activeTool() === 'select') {
+            L.DomEvent.stopPropagation(e);
+            this.state.selectedFeature.set({ type: 'building', id: bld.id });
+          } else if (this.state.activeTool() !== 'pan') {
+            this.handleMapClick({ x: Math.round(e.latlng.lng), y: Math.round(e.latlng.lat) });
+          }
+        });
+        this.buildingLabelsGroup.addLayer(bldLabel);
+      }
+    });
   }
 
   private renderTopography() {
