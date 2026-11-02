@@ -46,6 +46,14 @@ jobs:
             cd map-forge && npm ci
           fi
 
+      - name: Run unit tests
+        run: |
+          if [ -f package.json ]; then
+            npm test
+          elif [ -f map-forge/package.json ]; then
+            cd map-forge && npm test
+          fi
+
       - name: Build Angular application
         run: |
           if [[ "${{ github.repository }}" == *.github.io ]]; then
