@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import {
   Building,
   CityMap,
@@ -17,6 +17,7 @@ import {
   LayerVisibility
 } from '../models/map.models';
 import { AETHELBURG_PRESET, BLANK_MAP_PRESET, NOVARIA_METROPOLIS_PRESET, OAKHAVEN_PRESET } from './preset-maps';
+import { StorageService } from './storage.service';
 
 const STORAGE_KEY = 'mapforge_saved_city_v1';
 
@@ -106,9 +107,24 @@ export class MapStateService {
     }
   });
 
+  private storage = inject(StorageService);
+
   constructor() {
-    // Initialize history
+    // Initialize history with initial sync map
     this.pushHistory(this.currentMap());
+
+    // Asynchronously check IndexedDB for large cities that exceed the 5MB localStorage quota
+    this.storage.loadMap().then(saved => {
+      if (
+        saved &&
+        (saved.buildings.length !== this.currentMap().buildings.length ||
+          saved.id !== this.currentMap().id ||
+          saved.name !== this.currentMap().name)
+      ) {
+        this.currentMap.set(saved);
+        this.pushHistory(saved);
+      }
+    });
   }
 
   private loadInitialMap(): CityMap {
@@ -129,17 +145,8 @@ export class MapStateService {
   }
 
   saveToLocalStorage() {
-    try {
-      const serialized = JSON.stringify(this.currentMap());
-      // Prevent browser QuotaExceededError crashes when dealing with large high-population maps (> 4.5MB)
-      if (serialized.length > 4_500_000) {
-        console.warn('Map data exceeds 4.5MB localStorage threshold. Skipping local storage update; please use "Export JSON" to persist large metropolises.');
-        return;
-      }
-      localStorage.setItem(STORAGE_KEY, serialized);
-    } catch (e) {
-      console.warn('Could not save to localStorage (quota or disabled):', e);
-    }
+    // Persist to IndexedDB (asynchronous, multi-gigabyte capacity) + localStorage fallback
+    this.storage.saveMap(this.currentMap());
   }
 
   loadPreset(presetKey: 'aethelburg' | 'oakhaven' | 'novaria' | 'blank') {
