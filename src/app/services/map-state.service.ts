@@ -149,12 +149,24 @@ export class MapStateService {
     this.storage.saveMap(this.currentMap());
   }
 
-  loadPreset(presetKey: 'aethelburg' | 'oakhaven' | 'novaria' | 'blank') {
+  async loadPreset(presetKey: 'aethelburg' | 'oakhaven' | 'novaria' | 'libertopolis' | 'blank'): Promise<void> {
     let preset: CityMap;
     if (presetKey === 'aethelburg') preset = AETHELBURG_PRESET;
     else if (presetKey === 'oakhaven') preset = OAKHAVEN_PRESET;
     else if (presetKey === 'novaria') preset = NOVARIA_METROPOLIS_PRESET;
-    else preset = BLANK_MAP_PRESET;
+    else if (presetKey === 'libertopolis') {
+      try {
+        const response = await fetch('/presets/libertopolis.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+        preset = await response.json();
+      } catch (err) {
+        console.error('Failed to load Libertopolis preset:', err);
+        alert('Could not load Libertopolis preset file. Ensure /presets/libertopolis.json is present.');
+        return;
+      }
+    } else preset = BLANK_MAP_PRESET;
 
     const cloned = JSON.parse(JSON.stringify(preset));
     if (!cloned.topography) cloned.topography = [];

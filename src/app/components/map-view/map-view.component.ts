@@ -953,11 +953,17 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     const zoom = this.map.getZoom();
 
     // Multi-Scale Level of Detail (LOD):
-    // When zoomed out on large maps (zoom < -0.5), render prominent landmarks, institutional anchors,
-    // and highrises to avoid sub-pixel rendering thrash across tens of thousands of tiny footprints.
-    if (zoom < -0.5 && mapData.buildings.length > 500) {
+    // When zoomed way out (zoom < -1.0) on large maps (>500 buildings): render only landmarks & major highrises (>=16 floors)
+    if (zoom < -1.0 && mapData.buildings.length > 500) {
       return mapData.buildings.filter(
-        b => b.isLandmark || b.type === 'institutional' || b.type === 'residential_highrise' || (b.floors && b.floors >= 8)
+        b => b.isLandmark || b.type === 'institutional' || (b.floors && b.floors >= 16)
+      );
+    }
+
+    // When zoomed out moderately (zoom < -0.4): landmarks, institutions, and mid/highrises (>=6 floors)
+    if (zoom < -0.4 && mapData.buildings.length > 500) {
+      return mapData.buildings.filter(
+        b => b.isLandmark || b.type === 'institutional' || b.type === 'residential_highrise' || (b.floors && b.floors >= 6)
       );
     }
 
@@ -1021,22 +1027,27 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
         weight: isLandmark ? 2 : 1
       });
 
-      const { population, jobs } = this.demographics.estimateBuildingPopAndJobs(bld, mapData.era);
-      const tooltipHtml = `
-        <div style="font-family: var(--font-main);">
-          <strong style="color: ${isLandmark ? '#f59e0b' : '#f1f5f9'}; font-size: 13px;">${bld.name}</strong>
-          <div style="font-size: 11px; color: #94a3b8; margin: 2px 0;">
-            ${bld.type.replace('_', ' ').toUpperCase()} &bull; ${bld.floors} Floors
-          </div>
-          <div style="font-size: 11px; color: #38bdf8;">
-            Pop: <b>${population}</b> | Jobs: <b>${jobs}</b>
-          </div>
-          ${bld.chapterReferences?.length ? `<div style="font-size: 10px; color: #a78bfa; margin-top: 4px;">🔖 ${bld.chapterReferences.join(', ')}</div>` : ''}
-          ${bld.notes ? `<div style="font-size: 10px; color: #cbd5e1; margin-top: 4px; max-width: 220px; font-style: italic;">"${bld.notes}"</div>` : ''}
-        </div>
-      `;
+      // High-performance lazy tooltip: construct and bind only upon mouseover
+      poly.on('mouseover', () => {
+        if (!poly.getTooltip()) {
+          const { population, jobs } = this.demographics.estimateBuildingPopAndJobs(bld, mapData.era);
+          const tooltipHtml = `
+            <div style="font-family: var(--font-main);">
+              <strong style="color: ${isLandmark ? '#f59e0b' : '#f1f5f9'}; font-size: 13px;">${bld.name}</strong>
+              <div style="font-size: 11px; color: #94a3b8; margin: 2px 0;">
+                ${bld.type.replace('_', ' ').toUpperCase()} &bull; ${bld.floors} Floors
+              </div>
+              <div style="font-size: 11px; color: #38bdf8;">
+                Pop: <b>${population}</b> | Jobs: <b>${jobs}</b>
+              </div>
+              ${bld.chapterReferences?.length ? `<div style="font-size: 10px; color: #a78bfa; margin-top: 4px;">🔖 ${bld.chapterReferences.join(', ')}</div>` : ''}
+              ${bld.notes ? `<div style="font-size: 10px; color: #cbd5e1; margin-top: 4px; max-width: 220px; font-style: italic;">"${bld.notes}"</div>` : ''}
+            </div>
+          `;
+          poly.bindTooltip(tooltipHtml, { sticky: true }).openTooltip();
+        }
+      });
 
-      poly.bindTooltip(tooltipHtml, { sticky: true });
       poly.on('click', (e) => {
         if (this.state.activeTool() === 'select') {
           L.DomEvent.stopPropagation(e);

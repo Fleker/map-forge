@@ -51,6 +51,21 @@ describe('DemographicsService - High Population (1 Million) & Performance', () =
       expect(titles).toContain('Comprehensive Metropolitan Anchors');
       expect(titles).toContain('Balanced Employment & Housing');
     });
+
+    it('calculates demographics for the Libertopolis (1M Cyberpunk Metropolis) preset', () => {
+      // Load from public/presets/libertopolis.json
+      const fs = require('fs');
+      const libertopolis = JSON.parse(fs.readFileSync('public/presets/libertopolis.json', 'utf8'));
+      const stats = service.calculateStats(libertopolis);
+
+      expect(stats.totalPopulation).toBeGreaterThanOrEqual(950000);
+      expect(stats.totalPopulation).toBeLessThanOrEqual(1050000);
+      expect(stats.districtStats.length).toBe(17);
+      expect(libertopolis.buildings.length).toBeGreaterThanOrEqual(2500);
+      expect(libertopolis.transitLines.length).toBe(5);
+      expect(libertopolis.transitStations.length).toBeGreaterThanOrEqual(20);
+      expect(libertopolis.pois.length).toBeGreaterThanOrEqual(8);
+    });
   });
 
   describe('Megacity Realism Diagnostics & Edge Cases', () => {
